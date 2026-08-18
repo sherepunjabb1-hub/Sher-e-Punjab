@@ -1,22 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   AlertCircle,
   Car,
   CheckCircle2,
+  ChevronDown,
+  ExternalLink,
   Flame,
   Home,
+  Loader2,
+  MapPin,
   MessageCircle,
   Minus,
+  Navigation,
   Plus,
+  RefreshCw,
   ShoppingBag,
+  Store,
   Trash2,
   Utensils,
   X,
 } from 'lucide-react';
-import { CartItem, Language, OrderCustomerDetails, ServiceType } from '../types';
+import { CartItem, Language, OrderCustomerDetails, RestaurantBranch } from '../types';
 import { RESTAURANT_CONFIG } from '../data/seedData';
-import { SERVICE_TYPE_LABELS, SPICE_LEVEL_LABELS, TRANSLATIONS } from '../utils/translations';
+import { TRANSLATIONS, SPICE_LEVEL_LABELS } from '../utils/translations';
 import { generateWhatsAppOrderUrl } from '../utils/whatsapp';
+import {
+  RESTAURANT_BRANCHES,
+  calculateDeliveryFee,
+  findClosestBranch,
+  geocodeEcuadorAddress,
+} from '../utils/branchRouting';
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -37,8 +50,6 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   onRemoveItem,
   onClearCart,
 }) => {
-  if (!isOpen) return null;
-
   const t = TRANSLATIONS[currentLang];
   const isEs = currentLang === 'es';
 
@@ -50,15 +61,193 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
     deliveryAddress: '',
     tableNumber: '',
     orderNotes: '',
+    assignedBranch: RESTAURANT_BRANCHES[1], // default to Quito branch
+    branchDistanceKm: undefined,
+    isManualBranch: false,
   });
 
   const [formErrors, setFormErrors] = useState<string[]>([]);
   const [orderSentSuccess, setOrderSentSuccess] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
+
+  // Address Geocoding states
+  const [isGeocoding, setIsGeocoding] = useState(false);
+  const [geocodingFailed, setGeocodingFailed] = useState(false);
+  const [showManualBranchPicker, setShowManualBranchPicker] = useState(false);
+  const geocodeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Financial calculations
   const subtotal = items.reduce((sum, item) => sum + item.totalUnitPrice * item.quantity, 0);
-  const deliveryFee = details.serviceType === 'delivery' ? RESTAURANT_CONFIG.deliveryFee : 0;
+  const deliveryFee =
+    details.serviceType === 'delivery'
+      ? calculateDeliveryFee(details.branchDistanceKm)
+      : 0;
   const totalAmount = subtotal + deliveryFee;
+
+  // Auto-geocode when user pauses typing delivery address
+  useEffect(() => {
+    if (details.serviceType !== 'delivery') return;
+    if (details.isManualBranch) return; // respect manual choice
+
+    const addressText = details.deliveryAddress.trim();
+    if (addressText.length < 3) {
+      return;
+    }
+
+    if (geocodeTimeoutRef.current) {
+      clearTimeout(geocodeTimeoutRef.current);
+    }
+
+    geocodeTimeoutRef.current = setTimeout(async () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      abortControllerRef.current = new AbortController();
+
+      setIsGeocoding(true);
+      setGeocodingFailed(false);
+
+      try {
+        const result = await geocodeEcuadorAddress(addressText, abortControllerRef.current.signal);
+        if (result) {
+          setDetails((prev) => ({
+            ...prev,
+            assignedBranch: result.assignedBranch,
+            branchDistanceKm: result.distanceKm,
+            isManualBranch: false,
+          }));
+          setGeocodingFailed(false);
+        } else {
+          setGeocodingFailed(true);
+        }
+      } catch (err: any) {
+        if (err.name !== 'AbortError') {
+          setGeocodingFailed(true);
+        }
+      } finally {
+        setIsGeocoding(false);
+      }
+    }, 800);
+
+    return () => {
+      if (geocodeTimeoutRef.current) {
+        clearTimeout(geocodeTimeoutRef.current);
+      }
+    };
+  }, [details.deliveryAddress, details.serviceType, details.isManualBranch]);
+
+  const handleManualBranchSelect = (branch: RestaurantBranch) => {
+    setDetails((prev) => ({
+      ...prev,
+      assignedBranch: branch,
+      isManualBranch: true,
+      branchDistanceKm: undefined,
+    }));
+    setShowManualBranchPicker(false);
+    setGeocodingFailed(false);
+  };
+
+  const handleGetLiveLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationError(
+        isEs
+          ? 'La geolocalización no es compatible con este navegador'
+          : 'Geolocation is not supported by this browser'
+      );
+      return;
+    }
+    setIsLocating(true);
+    setLocationError(null);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        const accuracy = position.coords.accuracy;
+        const mapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+
+        // Find closest branch from exact GPS coordinates
+        const { branch, distanceKm } = findClosestBranch(lat, lng);
+
+        let detectedAddress = '';
+        try {
+          // Attempt reverse geocoding to human readable street
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 4000);
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
+            {
+              headers: { 'Accept-Language': isEs ? 'es' : 'en' },
+              signal: controller.signal,
+            }
+          );
+          clearTimeout(timeoutId);
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.display_name) {
+              detectedAddress = data.display_name;
+            }
+          }
+        } catch {
+          // Ignore reverse geocode failure
+        }
+
+        setDetails((prev) => ({
+          ...prev,
+          liveLocation: {
+            latitude: lat,
+            longitude: lng,
+            accuracy,
+            mapsUrl,
+            addressText: detectedAddress || undefined,
+          },
+          assignedBranch: branch,
+          branchDistanceKm: distanceKm,
+          isManualBranch: false,
+          deliveryAddress:
+            prev.deliveryAddress.trim() === '' && detectedAddress
+              ? detectedAddress
+              : prev.deliveryAddress,
+        }));
+
+        setIsLocating(false);
+        setGeocodingFailed(false);
+      },
+      (error) => {
+        setIsLocating(false);
+        if (error.code === error.PERMISSION_DENIED) {
+          setLocationError(t.locationErrorPermission);
+        } else if (error.code === error.TIMEOUT) {
+          setLocationError(
+            isEs
+              ? 'Tiempo de espera agotado al obtener señal GPS.'
+              : 'GPS signal request timed out.'
+          );
+        } else {
+          setLocationError(
+            isEs
+              ? 'No se pudo obtener la ubicación GPS actual.'
+              : 'Could not retrieve current GPS location.'
+          );
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 12000,
+        maximumAge: 0,
+      }
+    );
+  };
+
+  const handleRemoveLiveLocation = () => {
+    setDetails((prev) => ({
+      ...prev,
+      liveLocation: undefined,
+    }));
+    setLocationError(null);
+  };
 
   const validateForm = (): boolean => {
     const errors: string[] = [];
@@ -68,11 +257,11 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
     if (!details.customerPhone.trim()) {
       errors.push(isEs ? 'El teléfono o WhatsApp es obligatorio' : 'Phone / WhatsApp is required');
     }
-    if (details.serviceType === 'delivery' && !details.deliveryAddress.trim()) {
+    if (details.serviceType === 'delivery' && !details.deliveryAddress.trim() && !details.liveLocation) {
       errors.push(
         isEs
-          ? 'La dirección de entrega en Quito es obligatoria'
-          : 'Delivery address in Quito is required'
+          ? 'La dirección de entrega o la ubicación GPS es obligatoria'
+          : 'Delivery address or live GPS location is required'
       );
     }
     if (details.serviceType === 'dine_in' && !details.tableNumber.trim()) {
@@ -97,7 +286,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
       currentLang
     );
 
-    // Launch WhatsApp
+    // Launch WhatsApp directly
     window.open(whatsappUrl, '_blank');
 
     // Post-order action: Clear cart and show notification
@@ -108,6 +297,10 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
       onClose();
     }, 1800);
   };
+
+  const currentBranch = details.assignedBranch || RESTAURANT_BRANCHES[1];
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden bg-black/80 backdrop-blur-md flex justify-end">
@@ -340,17 +533,213 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
               {/* Address (If Delivery) */}
               {details.serviceType === 'delivery' && (
-                <div>
-                  <label className="block text-xs font-semibold text-white/80 mb-1">
-                    {t.deliveryAddress} <span className="text-[#FF6321]">*</span>
-                  </label>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <label className="block text-xs font-semibold text-white/80">
+                      {isEs ? 'Ingresa tu dirección o sector para entrega' : 'Enter your delivery address or sector'}{' '}
+                      <span className="text-[#FF6321]">
+                        {details.liveLocation ? '' : '*'}
+                      </span>
+                    </label>
+                    {isGeocoding && (
+                      <span className="text-[10px] text-[#D4AF37] flex items-center gap-1 font-medium">
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                        {t.calculatingBranch}
+                      </span>
+                    )}
+                  </div>
+
                   <textarea
                     value={details.deliveryAddress}
-                    onChange={(e) => setDetails({ ...details, deliveryAddress: e.target.value })}
-                    placeholder={t.deliveryAddressPlaceholder}
+                    onChange={(e) => {
+                      setDetails({
+                        ...details,
+                        deliveryAddress: e.target.value,
+                        isManualBranch: false,
+                      });
+                    }}
+                    placeholder={isEs ? 'Ej: Av. Pampite / Cumbayá, La Floresta, La Carolina, Tumbaco...' : 'E.g., Cumbayá, La Floresta, Shyris, Tumbaco...'}
                     rows={2}
                     className="w-full bg-white/5 border border-white/10 focus:border-[#D4AF37]/60 rounded-xl p-2.5 text-xs sm:text-sm text-white placeholder-white/30 focus:outline-none resize-none"
                   />
+
+                  {/* Assigned Branch Dynamic Status Card */}
+                  <div className="p-3 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/30 space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-full bg-[#D4AF37]/20 text-[#D4AF37] flex items-center justify-center shrink-0">
+                          <Store className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <div className="text-[10px] uppercase font-bold text-[#D4AF37] tracking-wider flex items-center gap-1">
+                            <span>{t.assignedBranchLabel}</span>
+                            {details.isManualBranch && (
+                              <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white/70 font-normal">
+                                {t.manualBranchBadge}
+                              </span>
+                            )}
+                          </div>
+                          <div className="font-bold text-white text-xs sm:text-sm">
+                            📍 {currentBranch.name}
+                          </div>
+                          {details.branchDistanceKm !== undefined && (
+                            <div className="text-[11px] text-white/70">
+                              {isEs ? 'Aproximadamente a' : 'Approximately'}{' '}
+                              <span className="text-[#D4AF37] font-bold">
+                                {details.branchDistanceKm.toFixed(1)} km
+                              </span>{' '}
+                              {isEs ? 'de tu dirección' : 'from your address'}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setShowManualBranchPicker(!showManualBranchPicker)}
+                        className="text-[10px] font-semibold text-[#D4AF37] hover:underline flex items-center gap-0.5 bg-black/40 px-2 py-1 rounded-lg border border-[#D4AF37]/30 hover:border-[#D4AF37]"
+                      >
+                        <span>{t.changeBranchManual}</span>
+                        <ChevronDown className="w-3 h-3" />
+                      </button>
+                    </div>
+
+                    {/* Manual Branch Dropdown Fallback */}
+                    {(showManualBranchPicker || geocodingFailed) && (
+                      <div className="pt-2 border-t border-white/10 space-y-1.5 animate-fade-in">
+                        <p className="text-[11px] text-white/80 font-medium">
+                          {geocodingFailed
+                            ? isEs
+                              ? '⚠️ No pudimos detectar automáticamente la dirección exacta. Por favor selecciona tu sucursal más cercana:'
+                              : '⚠️ Address coordinates not found. Please select your branch manually:'
+                            : t.selectBranchPrompt}
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {RESTAURANT_BRANCHES.map((b) => {
+                            const isSelected = currentBranch.id === b.id;
+                            return (
+                              <button
+                                key={b.id}
+                                type="button"
+                                onClick={() => handleManualBranchSelect(b)}
+                                className={`p-2 rounded-xl text-left border transition-all ${
+                                  isSelected
+                                    ? 'bg-[#D4AF37] text-black font-bold border-[#D4AF37]'
+                                    : 'bg-black/50 border-white/15 text-white/80 hover:border-[#D4AF37]/50'
+                                }`}
+                              >
+                                <div className="text-xs">{b.name}</div>
+                                <div className={`text-[10px] ${isSelected ? 'text-black/70' : 'text-white/40'}`}>
+                                  {b.sector}
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Live GPS Location Capture Area */}
+                  {!details.liveLocation ? (
+                    <div>
+                      <button
+                        type="button"
+                        onClick={handleGetLiveLocation}
+                        disabled={isLocating}
+                        className="w-full py-2.5 px-3 rounded-xl bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 border border-[#D4AF37]/30 hover:border-[#D4AF37]/60 text-[#D4AF37] font-semibold text-xs transition-all flex items-center justify-center gap-2 group disabled:opacity-50"
+                      >
+                        {isLocating ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin text-[#D4AF37]" />
+                            <span>{t.detectingLocation}</span>
+                          </>
+                        ) : (
+                          <>
+                            <Navigation className="w-4 h-4 text-[#D4AF37] group-hover:scale-110 transition-transform" />
+                            <span>{t.useLiveLocation}</span>
+                          </>
+                        )}
+                      </button>
+                      <p className="text-[10px] text-white/40 mt-1 pl-1">
+                        {t.locationOptionalHint}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="p-3 rounded-xl bg-emerald-950/40 border border-emerald-500/40 space-y-2 text-xs">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <div className="relative flex items-center justify-center w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 shrink-0">
+                            <MapPin className="w-3.5 h-3.5" />
+                            <span className="absolute -top-0.5 -right-0.5 flex h-2 w-2">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                            </span>
+                          </div>
+                          <div>
+                            <div className="font-bold text-emerald-300 text-xs flex items-center gap-1.5">
+                              <span>{t.locationAttached}</span>
+                            </div>
+                            <div className="text-[11px] font-mono text-white/60">
+                              {details.liveLocation.latitude.toFixed(5)}, {details.liveLocation.longitude.toFixed(5)}
+                              {details.liveLocation.accuracy && (
+                                <span className="ml-1 text-white/40">
+                                  (±{Math.round(details.liveLocation.accuracy)}m)
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                          <a
+                            href={details.liveLocation.mapsUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-emerald-400 hover:text-emerald-300 transition-colors flex items-center gap-1 text-[10px] font-medium border border-white/10"
+                            title={t.openInGoogleMaps}
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                            <span className="hidden sm:inline">{t.openInGoogleMaps}</span>
+                          </a>
+                          <button
+                            type="button"
+                            onClick={handleGetLiveLocation}
+                            disabled={isLocating}
+                            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition-colors border border-white/10"
+                            title={isEs ? 'Actualizar GPS' : 'Refresh GPS'}
+                          >
+                            <RefreshCw className={`w-3 h-3 ${isLocating ? 'animate-spin' : ''}`} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleRemoveLiveLocation}
+                            className="p-1.5 rounded-lg bg-white/5 hover:bg-rose-950/50 text-white/40 hover:text-rose-400 transition-colors border border-white/10"
+                            title={t.removeLocation}
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Geolocation error notification */}
+                  {locationError && (
+                    <div className="p-2.5 rounded-xl bg-amber-950/60 border border-amber-500/30 text-amber-200 text-[11px] flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5">
+                        <AlertCircle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                        <span>{locationError}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setLocationError(null)}
+                        className="text-amber-400/60 hover:text-amber-300 p-0.5"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -413,9 +802,16 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
               </div>
               {details.serviceType === 'delivery' && (
                 <div className="flex justify-between">
-                  <span>{t.deliveryFee}</span>
-                  <span className="font-mono">
-                    {deliveryFee > 0 ? `$${deliveryFee.toFixed(2)} USD` : t.freeDelivery}
+                  <span className="flex items-center gap-1">
+                    <span>{t.deliveryFee}</span>
+                    <span className="text-[10px] text-[#D4AF37] font-medium">
+                      {details.branchDistanceKm !== undefined
+                        ? `(${details.branchDistanceKm.toFixed(1)} km)`
+                        : `(0–3 km: $2.00)`}
+                    </span>
+                  </span>
+                  <span className="font-mono text-[#D4AF37] font-semibold">
+                    ${deliveryFee.toFixed(2)} USD
                   </span>
                 </div>
               )}
@@ -425,17 +821,23 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
               </div>
             </div>
 
-            {/* WhatsApp Checkout Button */}
+            {/* WhatsApp Checkout Button with Branch Indicator */}
             <button
               onClick={handleCheckoutWhatsApp}
-              className="w-full py-4 px-4 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] active:scale-98 text-black font-bold text-sm sm:text-base transition-all shadow-lg shadow-[#25D366]/20 flex items-center justify-center gap-2 uppercase tracking-wider"
+              className="w-full py-4 px-4 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] active:scale-98 text-black font-bold text-sm sm:text-base transition-all shadow-lg shadow-[#25D366]/20 flex items-center justify-center gap-2 uppercase tracking-wider group"
             >
               <MessageCircle className="w-5 h-5 fill-black text-[#25D366]" />
-              <span>{t.sendWhatsAppOrder}</span>
+              <span>
+                {isEs
+                  ? `Pedir a ${currentBranch.shortName}`
+                  : `Order from ${currentBranch.shortName}`}
+              </span>
             </button>
 
             <p className="text-[11px] text-white/40 text-center leading-relaxed">
-              {t.orderRedirectNotice}
+              {isEs
+                ? `Tu pedido se enviará directamente al WhatsApp de ${currentBranch.name} (${currentBranch.whatsappFormatted}).`
+                : `Your order will be routed directly to ${currentBranch.name} (${currentBranch.whatsappFormatted}).`}
             </p>
           </div>
         )}

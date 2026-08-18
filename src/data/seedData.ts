@@ -13,7 +13,7 @@ export const RESTAURANT_CONFIG: RestaurantConfig = {
   openingMinute: 0,
   closingHour: 21,
   closingMinute: 30,
-  deliveryFee: 2.50,
+  deliveryFee: 2.00,
   currency: '$',
 };
 

@@ -60,8 +60,6 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   onDeleteCategory,
   onResetDefaultMenu,
 }) => {
-  if (!isOpen) return null;
-
   const t = TRANSLATIONS[currentLang];
   const isEs = currentLang === 'es';
 
@@ -106,6 +104,8 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   const [settingsNewPassword, setSettingsNewPassword] = useState('');
   const [showSettingsPassword, setShowSettingsPassword] = useState(false);
   const [settingsPassSuccess, setSettingsPassSuccess] = useState(false);
+
+  if (!isOpen) return null;
 
   // --- Auth Handlers ---
   const handleLogin = (e: React.FormEvent) => {

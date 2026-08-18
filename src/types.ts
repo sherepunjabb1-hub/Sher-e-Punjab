@@ -53,6 +53,26 @@ export interface CartItem {
   imageUrl: string;
 }
 
+export interface RestaurantBranch {
+  id: string;
+  name: string;
+  shortName: string;
+  address: string;
+  sector: string;
+  latitude: number;
+  longitude: number;
+  whatsappNumber: string;
+  whatsappFormatted: string;
+}
+
+export interface LiveLocationData {
+  latitude: number;
+  longitude: number;
+  accuracy?: number;
+  mapsUrl: string;
+  addressText?: string;
+}
+
 export interface OrderCustomerDetails {
   customerName: string;
   customerPhone: string;
@@ -60,6 +80,10 @@ export interface OrderCustomerDetails {
   deliveryAddress: string;
   tableNumber: string;
   orderNotes: string;
+  liveLocation?: LiveLocationData;
+  assignedBranch?: RestaurantBranch;
+  branchDistanceKm?: number;
+  isManualBranch?: boolean;
 }
 
 export interface RestaurantConfig {

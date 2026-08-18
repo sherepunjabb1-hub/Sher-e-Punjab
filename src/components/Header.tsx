@@ -57,8 +57,16 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-2">
         {/* Brand identity */}
         <div className="flex items-center gap-3.5 cursor-pointer group" onClick={onOpenInfo}>
-          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#D4AF37] text-black flex items-center justify-center font-bold text-xl shadow-lg shadow-[#D4AF37]/20 group-hover:scale-105 transition-transform shrink-0 font-serif">
-            S
+          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full overflow-hidden border border-[#D4AF37]/40 shadow-lg shadow-[#D4AF37]/20 group-hover:scale-105 transition-transform shrink-0 bg-[#120E06] flex items-center justify-center">
+            <img 
+              src="/logo.svg" 
+              alt="Sher E Punjab Logo" 
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                // Fallback to stylized 'S' if image fails
+                (e.target as HTMLElement).style.display = 'none';
+              }} 
+            />
           </div>
           <div>
             <div className="flex items-center gap-2">

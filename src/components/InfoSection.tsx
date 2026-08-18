@@ -1,8 +1,8 @@
 import React from 'react';
-import { Clock, ExternalLink, Heart, MapPin, MessageCircle, Navigation, Phone, Sparkles, UtensilsCrossed } from 'lucide-react';
+import { Clock, ExternalLink, Heart, MapPin, MessageCircle, Navigation, Phone, Sparkles, Store, UtensilsCrossed } from 'lucide-react';
 import { Language } from '../types';
 import { TRANSLATIONS } from '../utils/translations';
-import { RESTAURANT_CONFIG } from '../data/seedData';
+import { RESTAURANT_BRANCHES } from '../utils/branchRouting';
 
 interface InfoSectionProps {
   currentLang: Language;
@@ -11,10 +11,6 @@ interface InfoSectionProps {
 export const InfoSection: React.FC<InfoSectionProps> = ({ currentLang }) => {
   const t = TRANSLATIONS[currentLang];
   const isEs = currentLang === 'es';
-
-  const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-    'Sher E Punjab Rincon de la India Juan Leon Mera 2677 Quito Ecuador'
-  )}`;
 
   return (
     <section id="info-section" className="py-12 sm:py-16 bg-[#0A0A0A] border-t border-white/10 text-[#F5F5F0] relative overflow-hidden">
@@ -29,11 +25,11 @@ export const InfoSection: React.FC<InfoSectionProps> = ({ currentLang }) => {
             <h3 className="serif text-2xl sm:text-4xl font-bold text-[#F5F5F0] leading-tight">
               {isEs ? (
                 <>
-                  La Auténtica Tradición Culinaria de la India en el <span className="text-[#D4AF37]">Corazón de Quito</span>
+                  La Auténtica Tradición Culinaria de la India en <span className="text-[#D4AF37]">Quito & Cumbayá</span>
                 </>
               ) : (
                 <>
-                  Authentic Culinary Heritage of India in the <span className="text-[#D4AF37]">Heart of Quito</span>
+                  Authentic Culinary Heritage of India in <span className="text-[#D4AF37]">Quito & Cumbayá</span>
                 </>
               )}
             </h3>
@@ -46,24 +42,11 @@ export const InfoSection: React.FC<InfoSectionProps> = ({ currentLang }) => {
 
             <div className="pt-2 flex flex-wrap gap-3">
               <a
-                href={`https://wa.me/${RESTAURANT_CONFIG.whatsappNumber}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-black font-bold text-xs sm:text-sm shadow-lg shadow-[#25D366]/20 transition-all uppercase tracking-wider"
+                href="#branches"
+                className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-[#D4AF37] hover:bg-[#c49f27] text-black font-bold text-xs sm:text-sm shadow-lg shadow-[#D4AF37]/20 transition-all uppercase tracking-wider"
               >
-                <MessageCircle className="w-4 h-4 fill-black text-[#25D366]" />
-                <span>{t.whatsappDirect}</span>
-              </a>
-
-              <a
-                href={googleMapsUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-5 py-3 rounded-xl glass hover:bg-white/10 text-[#D4AF37] font-bold text-xs sm:text-sm border border-white/10 transition-all uppercase tracking-wider"
-              >
-                <Navigation className="w-4 h-4 text-[#D4AF37]" />
-                <span>{isEs ? 'Ver en Google Maps' : 'View on Google Maps'}</span>
-                <ExternalLink className="w-3.5 h-3.5 opacity-60" />
+                <Store className="w-4 h-4 text-black" />
+                <span>{isEs ? 'Ver Nuestras 2 Sucursales' : 'View Our 2 Branches'}</span>
               </a>
             </div>
           </div>
@@ -79,76 +62,89 @@ export const InfoSection: React.FC<InfoSectionProps> = ({ currentLang }) => {
               <div className="absolute inset-0 dish-overlay" />
               <div className="absolute bottom-4 left-4 right-4">
                 <p className="serif font-bold text-lg text-white">Sher E Punjab (Rincón de la India)</p>
-                <p className="text-xs text-[#D4AF37]">Quito • La Mariscal / La Pinta</p>
+                <p className="text-xs text-[#D4AF37]">2 Sucursales en Ecuador: Cumbayá & Quito Norte</p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* 3 Information Pillars */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Location Pillar */}
-          <div className="glass p-6 rounded-2xl border border-white/10 space-y-3">
-            <div className="w-10 h-10 rounded-full bg-[#D4AF37]/10 text-[#D4AF37] flex items-center justify-center border border-[#D4AF37]/20">
-              <MapPin className="w-5 h-5" />
-            </div>
-            <h4 className="serif font-bold text-base text-[#F5F5F0]">{isEs ? 'Nuestra Ubicación' : 'Our Location'}</h4>
-            <p className="text-xs sm:text-sm text-white/70 leading-relaxed font-sans">
-              {RESTAURANT_CONFIG.address}
+        {/* 2 Branches Showcase Section */}
+        <div id="branches" className="space-y-6">
+          <div className="text-center space-y-2">
+            <h3 className="serif text-xl sm:text-3xl font-bold text-white">
+              {isEs ? 'Nuestras Sucursales en Ecuador' : 'Our Branches in Ecuador'}
+            </h3>
+            <p className="text-xs sm:text-sm text-white/50 max-w-xl mx-auto">
+              {isEs
+                ? 'Elige tu sucursal más cercana o ingresa tu dirección en el carrito para enrutamiento automático.'
+                : 'Choose your nearest branch or enter your address in the cart for automatic routing.'}
             </p>
-            <a
-              href={googleMapsUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-xs text-[#D4AF37] hover:text-[#e8ca68] font-semibold pt-1"
-            >
-              <span>{isEs ? 'Cómo Llegar' : 'Get Directions'}</span>
-              <ExternalLink className="w-3 h-3" />
-            </a>
           </div>
 
-          {/* Schedule Pillar */}
-          <div className="glass p-6 rounded-2xl border border-white/10 space-y-3">
-            <div className="w-10 h-10 rounded-full bg-[#D4AF37]/10 text-[#D4AF37] flex items-center justify-center border border-[#D4AF37]/20">
-              <Clock className="w-5 h-5" />
-            </div>
-            <h4 className="serif font-bold text-base text-[#F5F5F0]">{t.scheduleTitle}</h4>
-            <div className="text-xs sm:text-sm text-white/70 space-y-1 font-sans">
-              <p className="font-semibold text-white">
-                {isEs ? 'Lunes a Domingo' : 'Monday to Sunday'}
-              </p>
-              <p className="font-mono text-[#D4AF37] font-bold">12:00 PM – 9:30 PM</p>
-              <p className="text-[11px] text-white/50 pt-1">
-                {isEs ? 'Servicio continuo de almuerzo y cena' : 'Continuous lunch & dinner service'}
-              </p>
-            </div>
-          </div>
-
-          {/* Direct Orders & Contact */}
-          <div className="glass p-6 rounded-2xl border border-white/10 space-y-3">
-            <div className="w-10 h-10 rounded-full bg-[#D4AF37]/10 text-[#D4AF37] flex items-center justify-center border border-[#D4AF37]/20">
-              <Phone className="w-5 h-5" />
-            </div>
-            <h4 className="serif font-bold text-base text-[#F5F5F0]">{isEs ? 'Contacto & Pedidos' : 'Contact & Orders'}</h4>
-            <div className="text-xs sm:text-sm text-white/70 space-y-1 font-sans">
-              <p>
-                <span className="text-white/40">WhatsApp: </span>
-                <a
-                  href={`https://wa.me/${RESTAURANT_CONFIG.whatsappNumber}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-mono font-bold text-[#25D366] hover:underline"
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {RESTAURANT_BRANCHES.map((branch) => {
+              const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${branch.latitude},${branch.longitude}`;
+              return (
+                <div
+                  key={branch.id}
+                  className="glass p-6 rounded-2xl border border-white/10 hover:border-[#D4AF37]/40 transition-all space-y-4 shadow-xl flex flex-col justify-between"
                 >
-                  {RESTAURANT_CONFIG.whatsappFormatted}
-                </a>
-              </p>
-              <p>
-                <span className="text-white/40">{isEs ? 'Servicios: ' : 'Services: '}</span>
-                <span className="text-white/80">
-                  {isEs ? 'En Restaurante, Para Llevar, A Domicilio' : 'Dine-in, Takeout, Home Delivery'}
-                </span>
-              </p>
-            </div>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-10 h-10 rounded-full bg-[#D4AF37]/10 text-[#D4AF37] flex items-center justify-center border border-[#D4AF37]/30">
+                          <Store className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h4 className="serif font-bold text-lg text-white">{branch.name}</h4>
+                          <span className="text-[11px] font-semibold text-[#D4AF37] uppercase tracking-wider">
+                            {branch.sector}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <p className="text-xs sm:text-sm text-white/70 flex items-start gap-2">
+                      <MapPin className="w-4 h-4 text-[#D4AF37] shrink-0 mt-0.5" />
+                      <span>{branch.address}</span>
+                    </p>
+
+                    <div className="text-xs text-white/60 space-y-1 pl-6">
+                      <div className="flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5 text-[#D4AF37]" />
+                        <span>12:00 PM – 9:30 PM (Lunes a Domingo)</span>
+                      </div>
+                      <div className="font-mono text-[11px] text-white/40">
+                        GPS: {branch.latitude.toFixed(4)}°, {branch.longitude.toFixed(4)}°
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 flex flex-wrap gap-2.5 border-t border-white/10">
+                    <a
+                      href={`https://wa.me/${branch.whatsappNumber}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-black font-bold text-xs shadow-md transition-all"
+                    >
+                      <MessageCircle className="w-4 h-4 fill-black text-[#25D366]" />
+                      <span>WhatsApp ({branch.whatsappFormatted})</span>
+                    </a>
+
+                    <a
+                      href={mapsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-white/5 hover:bg-white/10 text-[#D4AF37] font-semibold text-xs border border-white/10 transition-all"
+                    >
+                      <Navigation className="w-3.5 h-3.5" />
+                      <span>Maps</span>
+                      <ExternalLink className="w-3 h-3 opacity-60" />
+                    </a>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

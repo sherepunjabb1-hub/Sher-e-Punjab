@@ -102,6 +102,22 @@ export interface Translations {
   backToMenu: string;
   requiredField: string;
   fillRequiredFields: string;
+  useLiveLocation: string;
+  detectingLocation: string;
+  locationAttached: string;
+  removeLocation: string;
+  openInGoogleMaps: string;
+  gpsAccuracy: string;
+  locationErrorPermission: string;
+  locationOptionalHint: string;
+  assignedBranchLabel: string;
+  calculatingBranch: string;
+  changeBranchManual: string;
+  autoMatchedBranch: string;
+  manualBranchBadge: string;
+  selectBranchPrompt: string;
+  findBranchBtn: string;
+  addressGeocodingHelp: string;
 }
 
 export const TRANSLATIONS: Record<Language, Translations> = {
@@ -207,6 +223,22 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     backToMenu: 'Volver al Menú',
     requiredField: 'Este campo es obligatorio',
     fillRequiredFields: 'Por favor complete todos los datos requeridos antes de continuar.',
+    useLiveLocation: 'Compartir mi Ubicación GPS en Vivo',
+    detectingLocation: 'Obteniendo ubicación GPS precisa...',
+    locationAttached: 'Ubicación GPS adjunta para el repartidor',
+    removeLocation: 'Quitar GPS',
+    openInGoogleMaps: 'Ver en Maps',
+    gpsAccuracy: 'Precisión',
+    locationErrorPermission: 'No se pudo acceder a la ubicación. Por favor ingrese su dirección manualmente.',
+    locationOptionalHint: 'Permite que el motorizado llegue exactamente a tu puerta en Quito mediante enlace directo de Google Maps.',
+    assignedBranchLabel: 'Sucursal de Atención Asignada',
+    calculatingBranch: 'Calculando sucursal más cercana...',
+    changeBranchManual: 'Cambiar sucursal',
+    autoMatchedBranch: 'Asignado automáticamente por cercanía',
+    manualBranchBadge: 'Selección manual',
+    selectBranchPrompt: 'Selecciona la sucursal de Sher E Punjab que atenderá tu pedido:',
+    findBranchBtn: 'Detectar Sucursal',
+    addressGeocodingHelp: 'Detectamos automáticamente si tu pedido va a la sucursal de Cumbayá o Quito Centro-Norte.',
   },
   en: {
     restaurantName: 'Sher E Punjab (Rincón de la India)',
@@ -310,6 +342,22 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     backToMenu: 'Back to Menu',
     requiredField: 'This field is required',
     fillRequiredFields: 'Please fill in all required fields before proceeding.',
+    useLiveLocation: 'Share My Live GPS Location',
+    detectingLocation: 'Detecting precise GPS coordinates...',
+    locationAttached: 'Live GPS location attached for delivery rider',
+    removeLocation: 'Remove GPS',
+    openInGoogleMaps: 'View on Maps',
+    gpsAccuracy: 'Accuracy',
+    locationErrorPermission: 'Could not access GPS location. Please enter address manually.',
+    locationOptionalHint: 'Allows the delivery rider to navigate directly to your door in Quito using Google Maps.',
+    assignedBranchLabel: 'Assigned Restaurant Branch',
+    calculatingBranch: 'Calculating closest branch...',
+    changeBranchManual: 'Change branch',
+    autoMatchedBranch: 'Automatically routed by proximity',
+    manualBranchBadge: 'Manual selection',
+    selectBranchPrompt: 'Select which Sher E Punjab branch should fulfill your order:',
+    findBranchBtn: 'Detect Branch',
+    addressGeocodingHelp: 'We automatically detect whether your delivery routes to Cumbayá or Quito branch.',
   },
 };
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Check, Flame, Minus, Plus, Utensils, X } from 'lucide-react';
 import { AddonOption, Language, MenuItem, SpiceLevel } from '../types';
 import { SPICE_LEVEL_LABELS, TRANSLATIONS } from '../utils/translations';
@@ -23,15 +23,25 @@ export const DishCustomizationModal: React.FC<DishCustomizationModalProps> = ({
   onClose,
   onAddToCart,
 }) => {
-  if (!item) return null;
-
   const t = TRANSLATIONS[currentLang];
   const isEs = currentLang === 'es';
 
-  const [spiceLevel, setSpiceLevel] = useState<SpiceLevel>(item.defaultSpiceLevel || 'medium');
+  const [spiceLevel, setSpiceLevel] = useState<SpiceLevel>('medium');
   const [selectedAddons, setSelectedAddons] = useState<AddonOption[]>([]);
   const [instructions, setInstructions] = useState('');
   const [quantity, setQuantity] = useState(1);
+
+  // Sync state whenever the selected item changes
+  useEffect(() => {
+    if (item) {
+      setSpiceLevel(item.defaultSpiceLevel || 'medium');
+      setSelectedAddons([]);
+      setInstructions('');
+      setQuantity(1);
+    }
+  }, [item]);
+
+  if (!item) return null;
 
   // Available addons: either dish-specific or default addons pool
   const addonsPool: AddonOption[] =

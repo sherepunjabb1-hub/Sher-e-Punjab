@@ -1,6 +1,6 @@
 {
   "name": "Sher E Punjab - Rincón de la India",
   "description": "Authentic Indian Restaurant in Quito, Ecuador. Interactive menu with WhatsApp ordering, spice customizations, and admin management.",
-  "requestFramePermissions": [],
+  "requestFramePermissions": ["geolocation"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
