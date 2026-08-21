@@ -3,6 +3,7 @@ import { Lock, Shield, UtensilsCrossed } from 'lucide-react';
 import { Language } from '../types';
 import { RESTAURANT_CONFIG } from '../data/seedData';
 import { TRANSLATIONS } from '../utils/translations';
+import { RestaurantLogo } from './RestaurantLogo';
 
 interface FooterProps {
   currentLang: Language;
@@ -19,8 +20,8 @@ export const Footer: React.FC<FooterProps> = ({ currentLang, onOpenAdmin }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2.5 text-[#F5F5F0] font-serif font-bold text-base">
-            <div className="w-8 h-8 rounded-full overflow-hidden border border-[#D4AF37]/40 flex items-center justify-center bg-[#120E06]">
-              <img src="/logo.svg" alt="Sher E Punjab" className="w-full h-full object-cover" />
+            <div className="w-8 h-8 rounded-full overflow-hidden border border-[#D4AF37]/40 flex items-center justify-center bg-[#120E06] p-0.5">
+              <RestaurantLogo className="w-full h-full" />
             </div>
             <span>{RESTAURANT_CONFIG.name}</span>
           </div>
