@@ -4,6 +4,7 @@ import { Language } from '../types';
 import { TRANSLATIONS } from '../utils/translations';
 import { getRestaurantStatus, RestaurantStatus } from '../utils/time';
 import { RESTAURANT_CONFIG } from '../data/seedData';
+import { RestaurantLogo } from './RestaurantLogo';
 
 interface HeaderProps {
   currentLang: Language;
