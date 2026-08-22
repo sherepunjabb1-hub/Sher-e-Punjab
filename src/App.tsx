@@ -12,11 +12,21 @@ import {
   getStoredCart,
   getStoredCategories,
   getStoredMenuItems,
-  resetToSeedData,
   setStoredCart,
   setStoredCategories,
   setStoredMenuItems,
 } from './utils/storage';
+import {
+  deleteCategoryFromFirestore,
+  deleteMenuItemFromFirestore,
+  resetCloudMenuToDefault,
+  saveCategoryToFirestore,
+  saveMenuItemToFirestore,
+  subscribeToAdminAuth,
+  subscribeToCategories,
+  subscribeToMenuItems,
+  toggleDishAvailabilityInFirestore,
+} from './utils/firebaseStorage';
 import { TRANSLATIONS } from './utils/translations';
 import { Header } from './components/Header';
 import { HeroBanner } from './components/HeroBanner';
@@ -43,9 +53,33 @@ export default function App() {
 
   const t = TRANSLATIONS[currentLang];
 
-  // Menu data state
+  // Menu data state (Starts with local cached seed for 0ms initial load, then live-syncs with Firestore)
   const [categories, setCategories] = useState<Category[]>(() => getStoredCategories());
   const [menuItems, setMenuItems] = useState<MenuItem[]>(() => getStoredMenuItems());
+  const [isCloudConnected, setIsCloudConnected] = useState(false);
+
+  // Real-time Cloud Sync with Firebase Firestore
+  useEffect(() => {
+    // 1. Subscribe to real-time Menu Items
+    const unsubMenu = subscribeToMenuItems((liveItems) => {
+      setMenuItems(liveItems);
+      setIsCloudConnected(true);
+    });
+
+    // 2. Subscribe to real-time Categories
+    const unsubCats = subscribeToCategories((liveCats) => {
+      setCategories(liveCats);
+    });
+
+    // 3. Subscribe to Admin Auth settings
+    const unsubAuth = subscribeToAdminAuth();
+
+    return () => {
+      unsubMenu();
+      unsubCats();
+      unsubAuth();
+    };
+  }, []);
 
   // Customer Cart state
   const [cart, setCart] = useState<CartItem[]>(() => getStoredCart());
@@ -194,8 +228,9 @@ export default function App() {
     clearStoredCart();
   };
 
-  // Admin Data Operations
-  const handleSaveDish = (updatedDish: MenuItem) => {
+  // Admin Data Operations (Live to Firebase Firestore)
+  const handleSaveDish = async (updatedDish: MenuItem) => {
+    // Optimistic UI update
     const exists = menuItems.some((d) => d.id === updatedDish.id);
     let newMenu: MenuItem[];
     if (exists) {
@@ -205,23 +240,45 @@ export default function App() {
     }
     setMenuItems(newMenu);
     setStoredMenuItems(newMenu);
+
+    // Save to Firestore Cloud database (real-time for all visitors)
+    try {
+      await saveMenuItemToFirestore(updatedDish);
+    } catch (err) {
+      console.error('Error saving dish to Firestore:', err);
+    }
   };
 
-  const handleDeleteDish = (dishId: string) => {
+  const handleDeleteDish = async (dishId: string) => {
     const newMenu = menuItems.filter((d) => d.id !== dishId);
     setMenuItems(newMenu);
     setStoredMenuItems(newMenu);
+
+    try {
+      await deleteMenuItemFromFirestore(dishId);
+    } catch (err) {
+      console.error('Error deleting dish from Firestore:', err);
+    }
   };
 
-  const handleToggleAvailability = (dishId: string) => {
+  const handleToggleAvailability = async (dishId: string) => {
+    const targetDish = menuItems.find((d) => d.id === dishId);
+    const newStatus = targetDish ? !targetDish.isAvailable : false;
+
     const newMenu = menuItems.map((d) =>
-      d.id === dishId ? { ...d, isAvailable: !d.isAvailable } : d
+      d.id === dishId ? { ...d, isAvailable: newStatus } : d
     );
     setMenuItems(newMenu);
     setStoredMenuItems(newMenu);
+
+    try {
+      await toggleDishAvailabilityInFirestore(dishId, newStatus);
+    } catch (err) {
+      console.error('Error toggling availability in Firestore:', err);
+    }
   };
 
-  const handleSaveCategory = (category: Category) => {
+  const handleSaveCategory = async (category: Category) => {
     const exists = categories.some((c) => c.id === category.id);
     let newCats: Category[];
     if (exists) {
@@ -231,18 +288,36 @@ export default function App() {
     }
     setCategories(newCats);
     setStoredCategories(newCats);
+
+    try {
+      await saveCategoryToFirestore(category);
+    } catch (err) {
+      console.error('Error saving category to Firestore:', err);
+    }
   };
 
-  const handleDeleteCategory = (categoryId: string) => {
+  const handleDeleteCategory = async (categoryId: string) => {
     const newCats = categories.filter((c) => c.id !== categoryId);
     setCategories(newCats);
     setStoredCategories(newCats);
+
+    try {
+      await deleteCategoryFromFirestore(categoryId);
+    } catch (err) {
+      console.error('Error deleting category from Firestore:', err);
+    }
   };
 
-  const handleResetDefaultMenu = () => {
-    const res = resetToSeedData();
-    setMenuItems(res.menu);
-    setCategories(res.categories);
+  const handleResetDefaultMenu = async () => {
+    try {
+      const res = await resetCloudMenuToDefault();
+      setMenuItems(res.menu);
+      setCategories(res.categories);
+      setStoredMenuItems(res.menu);
+      setStoredCategories(res.categories);
+    } catch (err) {
+      console.error('Error resetting menu in Firestore:', err);
+    }
   };
 
   // Filtered Menu Items for Customer Display

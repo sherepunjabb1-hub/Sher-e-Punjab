@@ -4,6 +4,7 @@ import {
   ArrowLeft,
   Check,
   CheckCircle2,
+  Cloud,
   Edit2,
   Eye,
   EyeOff,
@@ -25,12 +26,14 @@ import {
 } from 'lucide-react';
 import { AddonOption, Category, Language, MenuItem, SpiceLevel } from '../types';
 import { TRANSLATIONS } from '../utils/translations';
+import { compressImageFile } from '../utils/storage';
 import {
-  compressImageFile,
-  resetAdminPasswordWithMasterSecret,
-  updateAdminPassword,
-  verifyAdminPassword,
-} from '../utils/storage';
+  MASTER_RECOVERY_CODE,
+  resetAdminPasswordWithMasterSecretCloud,
+  updateAdminPasswordCloud,
+  verifyAdminPasswordCloud,
+  verifyAdminPasswordFast,
+} from '../utils/firebaseStorage';
 import { DEFAULT_ADDONS, RESTAURANT_CONFIG } from '../data/seedData';
 
 interface AdminPortalProps {
@@ -108,9 +111,11 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   if (!isOpen) return null;
 
   // --- Auth Handlers ---
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (verifyAdminPassword(passwordInput)) {
+    if (!passwordInput.trim()) return;
+    const isValid = await verifyAdminPasswordCloud(passwordInput);
+    if (isValid) {
       setIsAuthenticated(true);
       setAuthError('');
       setPasswordInput('');
@@ -119,11 +124,11 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
     }
   };
 
-  const handlePasswordRecovery = (e: React.FormEvent) => {
+  const handlePasswordRecovery = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!recoveryCode.trim() || !newPassword.trim()) return;
 
-    const success = resetAdminPasswordWithMasterSecret(recoveryCode, newPassword);
+    const success = await resetAdminPasswordWithMasterSecretCloud(recoveryCode, newPassword);
     if (success) {
       setRecoveryMsg({ type: 'success', text: t.adminPassResetSuccess });
       setTimeout(() => {
@@ -216,6 +221,11 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
             <Lock className="w-4 h-4 text-[#D4AF37]" />
             <span>{t.adminPortal}</span>
           </h2>
+          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-950/60 border border-emerald-500/30 text-emerald-400 text-[11px] font-medium">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <Cloud className="w-3 h-3" />
+            <span>{isEs ? 'Firebase En Vivo' : 'Firebase Live'}</span>
+          </div>
         </div>
 
         {isAuthenticated && (
@@ -586,16 +596,16 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                     </p>
                   )}
                   <button
-                    onClick={() => {
+                    onClick={async () => {
                       if (!settingsNewPassword.trim()) return;
-                      updateAdminPassword(settingsNewPassword);
+                      await updateAdminPasswordCloud(settingsNewPassword);
                       setSettingsPassSuccess(true);
                       setSettingsNewPassword('');
                       setTimeout(() => setSettingsPassSuccess(false), 2500);
                     }}
                     className="px-4 py-2 rounded-full bg-[#D4AF37] hover:bg-[#c49f27] text-black font-bold text-xs transition-colors uppercase tracking-wider"
                   >
-                    {isEs ? 'Actualizar Contraseña' : 'Save New Password'}
+                    {isEs ? 'Actualizar Contraseña en la Nube' : 'Save New Cloud Password'}
                   </button>
                 </div>
               </div>
