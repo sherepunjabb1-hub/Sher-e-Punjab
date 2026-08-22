@@ -2,9 +2,9 @@ import { CartItem, Category, MenuItem } from '../types';
 import { DEFAULT_CATEGORIES, DEFAULT_MENU_ITEMS } from '../data/seedData';
 
 const STORAGE_KEYS = {
-  MENU_ITEMS: 'sherepunjab_menu_items_v2',
-  CATEGORIES: 'sherepunjab_categories_v2',
-  CART: 'sherepunjab_cart_items_v2',
+  MENU_ITEMS: 'sherepunjab_menu_items_v2025',
+  CATEGORIES: 'sherepunjab_categories_v2025',
+  CART: 'sherepunjab_cart_items_v2025',
   LANGUAGE: 'sherepunjab_language_pref',
   ADMIN_AUTH_TOKEN: 'sherepunjab_admin_auth_v2',
   ADMIN_PASSWORD_HASH: 'sherepunjab_admin_pass_v2',
