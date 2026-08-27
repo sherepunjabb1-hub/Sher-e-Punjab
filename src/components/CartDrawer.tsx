@@ -1237,15 +1237,15 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-white/50">{isEs ? 'Tipo de Cuenta:' : 'Account Type:'}</span>
-                        <span className="text-white/90">{isEs ? 'Cuenta Corriente' : 'Checking Account'}</span>
+                        <span className="text-white/90">{isEs ? 'Cuenta de Ahorros' : 'Savings Account'}</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-white/50">{isEs ? 'Número de Cuenta:' : 'Account Number:'}</span>
                         <div className="flex items-center gap-1.5">
-                          <span className="font-mono font-bold text-[#D4AF37] text-sm">2100224162</span>
+                          <span className="font-mono font-bold text-[#D4AF37] text-sm">3031633500</span>
                           <button
                             type="button"
-                            onClick={() => handleCopyText('2100224162', 'acc_num')}
+                            onClick={() => handleCopyText('3031633500', 'acc_num')}
                             className="text-[10px] px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-white/90 transition-colors flex items-center gap-1 cursor-pointer"
                             title="Copiar número"
                           >
