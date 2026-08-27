@@ -37,7 +37,6 @@ import { CartItem, Language, OrderCustomerDetails, OrderRecord, RestaurantBranch
 import { TRANSLATIONS, SPICE_LEVEL_LABELS } from '../utils/translations';
 import { generateWhatsAppOrderUrl } from '../utils/whatsapp';
 import { saveOrderToFirestore } from '../utils/firebaseStorage';
-import { PayPhoneModal } from './PayPhoneModal';
 import {
   RESTAURANT_BRANCHES,
   calculateDeliveryFee,
@@ -83,11 +82,9 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
     isManualBranch: false,
   });
 
-  // Payment states: CARD (PayPhone international card), TRANSFER (Banco Pichincha), CASH
-  const [manualPaymentMethod, setManualPaymentMethod] = useState<'CARD' | 'TRANSFER' | 'CASH'>('CARD');
-  const [transferSubTab, setTransferSubTab] = useState<'QR' | 'BANK'>('QR');
+  // Payment states: QR (Deuna! / Pichincha QR), TRANSFER (Banco Pichincha transfer), CASH (Cash on delivery)
+  const [manualPaymentMethod, setManualPaymentMethod] = useState<'QR' | 'TRANSFER' | 'CASH'>('QR');
   const [isQrZoomOpen, setIsQrZoomOpen] = useState<boolean>(false);
-  const [isPayPhoneModalOpen, setIsPayPhoneModalOpen] = useState<boolean>(false);
   const [transferTxId, setTransferTxId] = useState<string>('');
   const [receiptImage, setReceiptImage] = useState<string | null>(null);
   const [receiptFileName, setReceiptFileName] = useState<string>('');
@@ -333,11 +330,11 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   const handleSendWhatsAppOrder = async () => {
     if (items.length === 0) return;
 
-    if (manualPaymentMethod === 'TRANSFER' && !transferTxId.trim()) {
+    if ((manualPaymentMethod === 'QR' || manualPaymentMethod === 'TRANSFER') && !transferTxId.trim()) {
       setFormErrors([
         isEs
-          ? 'El número de comprobante o ID de transacción es obligatorio para confirmar pagos por transferencia/QR.'
-          : 'Transaction ID / receipt number is required for transfer/QR payments.'
+          ? 'El número de comprobante o ID de transacción es obligatorio para confirmar pagos por QR o transferencia bancaria.'
+          : 'Transaction ID / receipt number is required for QR and bank transfer payments.'
       ]);
       return;
     }
@@ -1060,35 +1057,37 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 </label>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                  {/* Card (PayPhone) Option */}
+                  {/* Option 1: Deuna QR Payment */}
                   <button
                     type="button"
-                    onClick={() => setManualPaymentMethod('CARD')}
+                    id="payment-method-qr-btn"
+                    onClick={() => setManualPaymentMethod('QR')}
                     className={`p-3 rounded-xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
-                      manualPaymentMethod === 'CARD'
+                      manualPaymentMethod === 'QR'
                         ? 'bg-[#D4AF37]/20 border-[#D4AF37] text-white shadow-md shadow-[#D4AF37]/20 ring-1 ring-[#D4AF37]'
                         : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:border-white/20'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-xs font-bold flex items-center gap-1.5 text-white">
-                        <CreditCard className="w-4 h-4 text-[#D4AF37]" />
-                        <span>{isEs ? 'Tarjeta' : 'Card'}</span>
+                        <QrCode className="w-4 h-4 text-[#D4AF37]" />
+                        <span>{isEs ? 'Pago con QR' : 'QR Payment'}</span>
                       </span>
-                      {manualPaymentMethod === 'CARD' && (
+                      {manualPaymentMethod === 'QR' && (
                         <span className="w-4 h-4 rounded-full bg-[#D4AF37] text-black flex items-center justify-center text-[10px] font-bold">
                           ✓
                         </span>
                       )}
                     </div>
                     <span className="text-[10px] text-white/70 leading-tight">
-                      {isEs ? 'Visa / Mastercard Int.' : 'Int. Visa & Mastercard'}
+                      {isEs ? 'Deuna! / Pichincha' : 'Deuna! / Pichincha'}
                     </span>
                   </button>
 
-                  {/* Transfer Option */}
+                  {/* Option 2: Bank Transfer */}
                   <button
                     type="button"
+                    id="payment-method-transfer-btn"
                     onClick={() => setManualPaymentMethod('TRANSFER')}
                     className={`p-3 rounded-xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
                       manualPaymentMethod === 'TRANSFER'
@@ -1099,7 +1098,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-xs font-bold flex items-center gap-1.5 text-white">
                         <Banknote className="w-4 h-4 text-[#D4AF37]" />
-                        <span>{isEs ? 'Transferencia' : 'Transfer'}</span>
+                        <span>{isEs ? 'Transferencia' : 'Bank Transfer'}</span>
                       </span>
                       {manualPaymentMethod === 'TRANSFER' && (
                         <span className="w-4 h-4 rounded-full bg-[#D4AF37] text-black flex items-center justify-center text-[10px] font-bold">
@@ -1108,13 +1107,14 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                       )}
                     </div>
                     <span className="text-[10px] text-white/70 leading-tight">
-                      {isEs ? 'Pichincha / Deuna' : 'Pichincha / Deuna'}
+                      {isEs ? 'Banco Pichincha' : 'Banco Pichincha'}
                     </span>
                   </button>
 
-                  {/* Cash Option */}
+                  {/* Option 3: Cash on Delivery */}
                   <button
                     type="button"
+                    id="payment-method-cash-btn"
                     onClick={() => setManualPaymentMethod('CASH')}
                     className={`p-3 rounded-xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
                       manualPaymentMethod === 'CASH'
@@ -1140,294 +1140,101 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 </div>
               </div>
 
-              {/* CARD (PAYPHONE) DETAILS & ACTION */}
-              {manualPaymentMethod === 'CARD' ? (
+              {/* VIEW 1: QR PAYMENT (DEUNA! / BANCO PICHINCHA) */}
+              {manualPaymentMethod === 'QR' ? (
                 <div className="space-y-4 animate-fade-in">
-                  <div className="p-4 rounded-2xl bg-gradient-to-br from-[#1E1810] via-[#161616] to-[#121212] border border-[#D4AF37]/35 space-y-3 shadow-xl">
-                    <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-[#D4AF37]/20 flex items-center justify-center text-[#D4AF37]">
-                          <CreditCard className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <div className="font-bold text-white text-xs sm:text-sm">
-                            {isEs
-                              ? 'Tarjeta de Crédito / Débito'
-                              : 'Credit / Debit Card'}
-                          </div>
-                          <div className="text-[10px] text-[#D4AF37]">
-                            {isEs
-                              ? 'Visa y Mastercard Internacionales Aceptadas'
-                              : 'International Visa & Mastercard Accepted'}
-                          </div>
-                        </div>
+                  <div className="p-4 rounded-2xl bg-gradient-to-b from-[#1c1a17] via-[#141416] to-black border border-[#D4AF37]/40 space-y-3.5 shadow-xl text-center">
+                    <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                      <div className="flex items-center gap-1.5 text-left">
+                        <span className="font-bold text-[#D4AF37] text-xs flex items-center gap-1">
+                          <QrCode className="w-4 h-4 text-[#D4AF37]" />
+                          <span>{isEs ? 'Código QR Oficial Deuna! / Pichincha' : 'Official Deuna! / Pichincha QR'}</span>
+                        </span>
                       </div>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
-                        USD
+                      <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 font-bold border border-purple-500/30">
+                        Deuna!
                       </span>
                     </div>
 
-                    {/* Powered by Payphone trust pill */}
-                    <div className="flex items-center gap-2 p-2 rounded-lg bg-black/40 border border-white/10 text-[11px] text-white/80">
-                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                      <span>
+                    {/* QR Graphic Container */}
+                    <div className="relative mx-auto max-w-[270px] bg-gradient-to-b from-[#18171d] to-[#0f0e13] p-3 rounded-2xl border border-[#D4AF37]/30 shadow-2xl space-y-2.5">
+                      <div className="flex justify-center items-center gap-1.5 text-[9px] font-bold text-white/80">
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 flex items-center gap-1">
+                          ✓ {isEs ? 'Rápido' : 'Fast'}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-full bg-blue-950/60 border border-blue-500/40 text-blue-300 flex items-center gap-1">
+                          🛡️ {isEs ? 'Seguro' : 'Secure'}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-full bg-purple-950/60 border border-purple-500/40 text-purple-300 flex items-center gap-1">
+                          ⭐ {isEs ? 'Simple' : 'Simple'}
+                        </span>
+                      </div>
+
+                      {/* Clickable QR Code */}
+                      <div
+                        onClick={() => setIsQrZoomOpen(true)}
+                        className="group relative bg-white p-2.5 rounded-xl cursor-pointer hover:ring-2 hover:ring-[#D4AF37] transition-all overflow-hidden flex items-center justify-center shadow-md"
+                        title={isEs ? 'Clic para ampliar QR' : 'Click to enlarge QR'}
+                      >
+                        <img
+                          src="/deuna-qr.svg"
+                          alt="Deuna QR Sher e Punjab"
+                          className="w-full h-auto max-h-56 object-contain mx-auto"
+                        />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-xl gap-1 text-white text-xs font-bold">
+                          <Maximize2 className="w-4 h-4 text-[#D4AF37]" />
+                          <span>{isEs ? 'Ampliar QR' : 'Enlarge QR'}</span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-0.5 text-center">
+                        <div className="text-xs font-bold text-white tracking-wide">
+                          Sukhjinder Boparai
+                        </div>
+                        <div className="text-[10px] text-[#D4AF37] font-serif font-bold">
+                          ¡Gracias por elegir Sher e Punjab!
+                        </div>
+                        <div className="text-[9px] text-white/50 tracking-widest font-semibold">
+                          QUITO • CUMBAYÁ
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action buttons under QR: Enlarge & Download */}
+                    <div className="flex items-center justify-center gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setIsQrZoomOpen(true)}
+                        className="text-xs px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
+                      >
+                        <Maximize2 className="w-3.5 h-3.5 text-[#D4AF37]" />
+                        <span>{isEs ? 'Ver QR en grande' : 'Enlarge QR'}</span>
+                      </button>
+                      <a
+                        href="/deuna-qr.svg"
+                        download="Sher-e-Punjab-Deuna-QR.svg"
+                        className="text-xs px-3 py-1.5 rounded-lg bg-[#D4AF37]/20 hover:bg-[#D4AF37]/30 text-[#D4AF37] font-medium flex items-center gap-1.5 transition-colors"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        <span>{isEs ? 'Guardar QR' : 'Save QR'}</span>
+                      </a>
+                    </div>
+
+                    {/* Instructions Banner */}
+                    <div className="p-3 rounded-xl bg-purple-950/30 border border-purple-500/30 text-[11px] text-purple-200 text-left leading-relaxed flex items-start gap-2">
+                      <Smartphone className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
+                      <div>
+                        <strong>{isEs ? 'Instrucciones de Pago QR:' : 'QR Payment Instructions:'}</strong>{' '}
                         {isEs
-                          ? 'Powered by PayPhone — No account required (No requiere cuenta)'
-                          : 'Powered by PayPhone — No account required'}
-                      </span>
-                    </div>
-
-                    {/* Accepted Card Badges */}
-                    <div className="space-y-1 pt-1">
-                      <span className="text-[10px] text-white/50 uppercase tracking-wider block">
-                        {isEs ? 'Tarjetas Aceptadas:' : 'Accepted Cards:'}
-                      </span>
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <div className="h-6 px-2 bg-[#1434CB] rounded text-[10px] text-white font-black italic flex items-center">
-                          VISA
-                        </div>
-                        <div className="h-6 px-2 bg-[#1F1F1F] rounded flex items-center border border-white/20">
-                          <div className="flex items-center -space-x-1">
-                            <div className="w-3 h-3 rounded-full bg-[#EB001B]" />
-                            <div className="w-3 h-3 rounded-full bg-[#F79E1B]" />
-                          </div>
-                        </div>
-                        <div className="h-6 px-2 bg-[#006FCF] rounded text-[9px] text-white font-bold flex items-center">
-                          AMEX
-                        </div>
-                        <div className="h-6 px-2 bg-[#004A97] rounded text-[9px] text-white font-bold flex items-center">
-                          DINERS
-                        </div>
-                        <div className="h-6 px-2 bg-[#FF6000] rounded text-[9px] text-white font-bold flex items-center">
-                          DISCOVER
-                        </div>
+                          ? `1. Abre Deuna! o la app móvil de tu banco. 2. Escanea el código QR de Sukhjinder Boparai. 3. Transfiere el monto exacto de `
+                          : `1. Open Deuna! or your bank app. 2. Scan Sukhjinder Boparai's QR code. 3. Transfer the exact amount of `}
+                        <span className="font-bold text-[#D4AF37]">${totalAmount.toFixed(2)} USD</span>{' '}
+                        {isEs ? 'e ingresa el ID de transacción abajo.' : 'and enter the transaction ID below.'}
                       </div>
                     </div>
-
-                    <div className="pt-2 border-t border-white/10 flex items-center justify-between text-xs">
-                      <span className="text-white/60">{isEs ? 'Total a procesar:' : 'Total in USD:'}</span>
-                      <span className="font-mono font-bold text-[#D4AF37] text-base">
-                        ${totalAmount.toFixed(2)} USD
-                      </span>
-                    </div>
-
-                    {/* Direct Card Modal Trigger Button */}
-                    <button
-                      type="button"
-                      id="open-payphone-checkout-btn"
-                      onClick={() => setIsPayPhoneModalOpen(true)}
-                      className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-[#D4AF37] via-[#C9A028] to-[#AA820A] hover:brightness-110 active:scale-98 text-black font-bold text-xs sm:text-sm flex items-center justify-between transition-all shadow-lg shadow-[#D4AF37]/20 cursor-pointer"
-                    >
-                      <div className="flex items-center gap-2">
-                        <CreditCard className="w-4 h-4 text-black" />
-                        <span>
-                          {isEs
-                            ? 'Abrir Pasarela de Pago con Tarjeta'
-                            : 'Open Card Payment Gateway'}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1 font-mono text-black font-extrabold">
-                        <span>${totalAmount.toFixed(2)} USD</span>
-                        <ArrowRight className="w-4 h-4" />
-                      </div>
-                    </button>
-                  </div>
-                </div>
-              ) : manualPaymentMethod === 'TRANSFER' ? (
-                <div className="space-y-4 animate-fade-in">
-                  {/* Sub-Tabs: Deuna QR vs Direct Bank Details */}
-                  <div className="grid grid-cols-2 gap-2 p-1 bg-white/5 rounded-xl border border-white/10">
-                    <button
-                      type="button"
-                      onClick={() => setTransferSubTab('QR')}
-                      className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                        transferSubTab === 'QR'
-                          ? 'bg-[#D4AF37] text-black shadow-md'
-                          : 'text-white/70 hover:text-white hover:bg-white/5'
-                      }`}
-                    >
-                      <QrCode className="w-3.5 h-3.5" />
-                      <span>{isEs ? 'Código QR Deuna!' : 'Deuna! QR Code'}</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setTransferSubTab('BANK')}
-                      className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                        transferSubTab === 'BANK'
-                          ? 'bg-[#D4AF37] text-black shadow-md'
-                          : 'text-white/70 hover:text-white hover:bg-white/5'
-                      }`}
-                    >
-                      <Banknote className="w-3.5 h-3.5" />
-                      <span>{isEs ? 'Datos Bancarios' : 'Bank Account'}</span>
-                    </button>
                   </div>
 
-                  {/* TAB 1: DEUNA QR CODE VIEW */}
-                  {transferSubTab === 'QR' ? (
-                    <div className="p-4 rounded-2xl bg-gradient-to-b from-[#1c1a17] via-[#141416] to-black border border-[#D4AF37]/40 space-y-3.5 shadow-xl text-center">
-                      <div className="flex items-center justify-between border-b border-white/10 pb-2">
-                        <div className="flex items-center gap-1.5 text-left">
-                          <span className="font-bold text-[#D4AF37] text-xs flex items-center gap-1">
-                            <QrCode className="w-4 h-4 text-[#D4AF37]" />
-                            <span>{isEs ? 'Pago QR Deuna! / Pichincha' : 'Deuna! QR Payment'}</span>
-                          </span>
-                        </div>
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/30">
-                          Deuna! (d!)
-                        </span>
-                      </div>
-
-                      {/* Deuna QR Standee Visual Container */}
-                      <div className="relative mx-auto max-w-[260px] bg-gradient-to-b from-[#18171d] to-[#0f0e13] p-3.5 rounded-2xl border border-[#D4AF37]/30 shadow-2xl space-y-2.5">
-                        {/* Top Badges */}
-                        <div className="flex justify-center items-center gap-1.5 text-[9px] font-bold text-white/80">
-                          <span className="px-2 py-0.5 rounded-full bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 flex items-center gap-1">
-                            ✓ {isEs ? 'Rápido' : 'Fast'}
-                          </span>
-                          <span className="px-2 py-0.5 rounded-full bg-blue-950/60 border border-blue-500/40 text-blue-300 flex items-center gap-1">
-                            🛡️ {isEs ? 'Seguro' : 'Secure'}
-                          </span>
-                          <span className="px-2 py-0.5 rounded-full bg-purple-950/60 border border-purple-500/40 text-purple-300 flex items-center gap-1">
-                            ⭐ {isEs ? 'Simple' : 'Simple'}
-                          </span>
-                        </div>
-
-                        {/* High Resolution Scannable QR Graphic */}
-                        <div
-                          onClick={() => setIsQrZoomOpen(true)}
-                          className="group relative bg-white p-3 rounded-xl cursor-pointer hover:ring-2 hover:ring-[#D4AF37] transition-all overflow-hidden flex items-center justify-center shadow-md"
-                          title={isEs ? 'Clic para ampliar QR' : 'Click to enlarge QR'}
-                        >
-                          <img
-                            src="/deuna-qr.svg"
-                            alt="Deuna QR Sher e Punjab"
-                            className="w-full h-auto max-h-52 object-contain mx-auto"
-                          />
-                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-xl gap-1 text-white text-xs font-bold">
-                            <Maximize2 className="w-4 h-4 text-[#D4AF37]" />
-                            <span>{isEs ? 'Ampliar QR' : 'Enlarge QR'}</span>
-                          </div>
-                        </div>
-
-                        {/* Titular & Location on Standee */}
-                        <div className="space-y-0.5 text-center">
-                          <div className="text-xs font-bold text-white tracking-wide">
-                            Sukhjinder Boparai
-                          </div>
-                          <div className="text-[10px] text-[#D4AF37] font-serif font-bold">
-                            ¡Gracias por elegir Sher e Punjab!
-                          </div>
-                          <div className="text-[9px] text-white/50 tracking-widest font-semibold">
-                            QUITO • CUMBAYÁ
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Action buttons under QR: Enlarge & Download */}
-                      <div className="flex items-center justify-center gap-2 pt-1">
-                        <button
-                          type="button"
-                          onClick={() => setIsQrZoomOpen(true)}
-                          className="text-xs px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
-                        >
-                          <Maximize2 className="w-3.5 h-3.5 text-[#D4AF37]" />
-                          <span>{isEs ? 'Ver QR en grande' : 'Enlarge QR'}</span>
-                        </button>
-                        <a
-                          href="/deuna-qr.svg"
-                          download="Sher-e-Punjab-Deuna-QR.svg"
-                          className="text-xs px-3 py-1.5 rounded-lg bg-[#D4AF37]/20 hover:bg-[#D4AF37]/30 text-[#D4AF37] font-medium flex items-center gap-1.5 transition-colors"
-                        >
-                          <Download className="w-3.5 h-3.5" />
-                          <span>{isEs ? 'Guardar QR' : 'Save QR'}</span>
-                        </a>
-                      </div>
-
-                      <div className="p-2.5 rounded-xl bg-cyan-950/30 border border-cyan-500/30 text-[11px] text-cyan-200 text-left leading-relaxed flex items-start gap-2">
-                        <Smartphone className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
-                        <div>
-                          <strong>{isEs ? 'Instrucciones Deuna!:' : 'Deuna! Instructions:'}</strong>{' '}
-                          {isEs
-                            ? `Abre tu app Deuna o Banca Móvil Pichincha, escanea el código y transfiere el valor exacto de `
-                            : `Open your Deuna or Pichincha app, scan the QR code and transfer the exact amount of `}
-                          <span className="font-bold text-[#D4AF37]">${totalAmount.toFixed(2)} USD</span>.
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    /* TAB 2: DIRECT BANCO PICHINCHA DETAILS */
-                    <div className="p-4 rounded-2xl bg-gradient-to-b from-black/80 to-black/60 border border-[#D4AF37]/35 space-y-3 text-xs shadow-lg">
-                      <div className="flex items-center justify-between border-b border-white/10 pb-2">
-                        <span className="font-bold text-[#D4AF37] text-xs flex items-center gap-1.5">
-                          <Banknote className="w-4 h-4 text-[#D4AF37]" />
-                          <span>{isEs ? 'Datos de Cuenta Bancaria Oficial' : 'Official Bank Account Details'}</span>
-                        </span>
-                        <span className="text-[10px] text-white/50">{isEs ? 'Quito, Ecuador' : 'Quito, Ecuador'}</span>
-                      </div>
-
-                      <div className="grid grid-cols-1 gap-2 text-xs bg-white/5 p-3 rounded-xl border border-white/5 font-sans">
-                        <div className="flex justify-between items-center">
-                          <span className="text-white/50">{isEs ? 'Banco:' : 'Bank:'}</span>
-                          <span className="font-bold text-white">Banco Pichincha</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-white/50">{isEs ? 'Tipo de Cuenta:' : 'Account Type:'}</span>
-                          <span className="text-white/90">{isEs ? 'Cuenta de Ahorros' : 'Savings Account'}</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-white/50">{isEs ? 'Número de Cuenta:' : 'Account Number:'}</span>
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-mono font-bold text-[#D4AF37] text-sm">3031633500</span>
-                            <button
-                              type="button"
-                              onClick={() => handleCopyText('3031633500', 'acc_num')}
-                              className="text-[10px] px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-white/90 transition-colors flex items-center gap-1 cursor-pointer"
-                              title="Copiar número"
-                            >
-                              {copiedField === 'acc_num' ? (
-                                <Check className="w-3 h-3 text-emerald-400" />
-                              ) : (
-                                <Copy className="w-3 h-3" />
-                              )}
-                              <span>{copiedField === 'acc_num' ? (isEs ? 'Copiado' : 'Copied') : (isEs ? 'Copiar' : 'Copy')}</span>
-                            </button>
-                          </div>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-white/50">{isEs ? 'Titular:' : 'Beneficiary:'}</span>
-                          <span className="font-medium text-white truncate">SHER E PUNJAB</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-white/50">{isEs ? 'RUC / C.I.:' : 'ID / RUC:'}</span>
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-mono text-white/90">1715256226001</span>
-                            <button
-                              type="button"
-                              onClick={() => handleCopyText('1715256226001', 'ruc_num')}
-                              className="text-[10px] px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-white/90 transition-colors flex items-center gap-1 cursor-pointer"
-                              title="Copiar RUC"
-                            >
-                              {copiedField === 'ruc_num' ? (
-                                <Check className="w-3 h-3 text-emerald-400" />
-                              ) : (
-                                <Copy className="w-3 h-3" />
-                              )}
-                              <span>{copiedField === 'ruc_num' ? (isEs ? 'Copiado' : 'Copied') : (isEs ? 'Copiar' : 'Copy')}</span>
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="p-2.5 rounded-lg bg-[#D4AF37]/10 border border-[#D4AF37]/20 text-[11px] text-amber-200/90 leading-relaxed">
-                        💡 {isEs
-                          ? `Monto exacto a transferir: $${totalAmount.toFixed(2)} USD. Puedes pagar desde Banca Móvil Pichincha o Deuna.`
-                          : `Exact transfer amount: $${totalAmount.toFixed(2)} USD. You can pay via Pichincha Mobile or Deuna.`}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* MANDATORY Transaction ID / Comprobante Number Input */}
+                  {/* MANDATORY Transaction ID for QR */}
                   <div className={`p-4 rounded-2xl border transition-all space-y-2 ${
                     transferTxId.trim()
                       ? 'bg-emerald-950/20 border-emerald-500/40 ring-1 ring-emerald-500/30'
@@ -1436,7 +1243,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     <div className="flex items-center justify-between">
                       <label className="block text-xs font-bold text-white flex items-center gap-1.5">
                         <span>
-                          {isEs ? 'ID de Transacción / N° de Comprobante' : 'Transaction ID / Receipt Number'}
+                          {isEs ? 'ID de Transacción / N° de Comprobante Deuna' : 'Transaction ID / Deuna Receipt Number'}
                         </span>
                         <span className="text-rose-400 font-extrabold text-sm">*</span>
                       </label>
@@ -1455,10 +1262,10 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
                     <input
                       type="text"
-                      id="transfer-tx-id-input"
+                      id="qr-tx-id-input"
                       value={transferTxId}
                       onChange={(e) => setTransferTxId(e.target.value)}
-                      placeholder={isEs ? 'Ej: 38491028 o código de confirmación Deuna' : 'E.g., 38491028 or Deuna confirmation code'}
+                      placeholder={isEs ? 'Ej: Código de confirmación o ID Deuna' : 'E.g., Deuna confirmation ID'}
                       className="w-full bg-black/60 border border-white/20 focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] rounded-xl p-3 text-xs sm:text-sm text-white placeholder-white/30 focus:outline-none font-mono"
                     />
 
@@ -1467,8 +1274,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                         <AlertCircle className="w-3 h-3 text-amber-400 shrink-0" />
                         <span>
                           {isEs
-                            ? 'Debes ingresar el ID de transacción de tu transferencia o pago Deuna para poder confirmar el pedido.'
-                            : 'You must enter the transaction ID from your bank or Deuna transfer to confirm your order.'}
+                            ? 'Debes ingresar el ID de transacción de tu pago QR para poder confirmar el pedido.'
+                            : 'You must enter the transaction ID from your QR payment to confirm your order.'}
                         </span>
                       </p>
                     ) : (
@@ -1485,7 +1292,216 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                   <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-3">
                     <div className="flex items-center justify-between">
                       <label className="block text-xs font-semibold text-white/90">
-                        {isEs ? 'Adjuntar Foto o Captura del Comprobante (Opcional):' : 'Attach Receipt Photo or Screenshot (Optional):'}
+                        {isEs ? 'Adjuntar Captura del Pago QR (Opcional):' : 'Attach QR Payment Screenshot (Optional):'}
+                      </label>
+                      <span className="text-[10px] text-emerald-400 font-medium">
+                        {isEs ? 'Verificación más rápida' : 'Faster verification'}
+                      </span>
+                    </div>
+
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleReceiptFileChange}
+                      accept="image/*"
+                      className="hidden"
+                    />
+
+                    {!receiptImage ? (
+                      <div
+                        onClick={() => fileInputRef.current?.click()}
+                        className="border-2 border-dashed border-white/20 hover:border-[#D4AF37]/60 rounded-xl p-4 text-center cursor-pointer transition-all bg-black/30 hover:bg-black/50 group"
+                      >
+                        <div className="w-10 h-10 rounded-full bg-[#D4AF37]/10 text-[#D4AF37] flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform">
+                          <UploadCloud className="w-5 h-5" />
+                        </div>
+                        <p className="text-xs font-bold text-white group-hover:text-[#D4AF37] transition-colors">
+                          {isEs ? 'Haz clic para subir captura de pantalla' : 'Click to upload screenshot'}
+                        </p>
+                        <p className="text-[11px] text-white/40 mt-0.5">
+                          {isEs ? 'Formatos: JPG, PNG, Captura de pantalla' : 'Formats: JPG, PNG, Screenshots'}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="p-3 rounded-xl bg-black/60 border border-emerald-500/40 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <ImageIcon className="w-4 h-4 text-emerald-400" />
+                            <span className="text-xs font-semibold text-white truncate max-w-[200px]">
+                              {receiptFileName || (isEs ? 'Captura adjunta' : 'Screenshot attached')}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={handleRemoveReceiptImage}
+                            className="text-xs text-rose-400 hover:text-rose-300 p-1 flex items-center gap-1 cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>{isEs ? 'Eliminar' : 'Remove'}</span>
+                          </button>
+                        </div>
+
+                        <div className="relative rounded-lg overflow-hidden border border-white/10 max-h-48 bg-black">
+                          <img
+                            src={receiptImage}
+                            alt="Receipt preview"
+                            className="w-full h-auto max-h-48 object-contain mx-auto"
+                          />
+                        </div>
+                        <p className="text-[10px] text-emerald-300 text-center">
+                          ✓ {isEs ? 'Captura lista. Se guardará con tu pedido y podrás enviarla por WhatsApp.' : 'Screenshot attached successfully.'}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : manualPaymentMethod === 'TRANSFER' ? (
+                /* VIEW 2: BANK TRANSFER (BANCO PICHINCHA) */
+                <div className="space-y-4 animate-fade-in">
+                  <div className="p-4 rounded-2xl bg-gradient-to-b from-black/80 to-black/60 border border-[#D4AF37]/35 space-y-3 text-xs shadow-lg">
+                    <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                      <span className="font-bold text-[#D4AF37] text-xs flex items-center gap-1.5">
+                        <Banknote className="w-4 h-4 text-[#D4AF37]" />
+                        <span>{isEs ? 'Datos de Cuenta Bancaria Oficial' : 'Official Bank Account Details'}</span>
+                      </span>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#D4AF37]/20 text-[#D4AF37] font-bold border border-[#D4AF37]/30">
+                        Banco Pichincha
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-2.5 text-xs bg-white/5 p-3.5 rounded-xl border border-white/5 font-sans">
+                      <div className="flex justify-between items-center">
+                        <span className="text-white/50">{isEs ? 'Banco:' : 'Bank:'}</span>
+                        <span className="font-bold text-white text-sm">Banco Pichincha</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-white/50">{isEs ? 'Tipo de Cuenta:' : 'Account Type:'}</span>
+                        <span className="text-white/90 font-medium">{isEs ? 'Cuenta de Ahorros' : 'Savings Account'}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-white/50">{isEs ? 'Número de Cuenta:' : 'Account Number:'}</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-mono font-bold text-[#D4AF37] text-sm sm:text-base">3031633500</span>
+                          <button
+                            type="button"
+                            onClick={() => handleCopyText('3031633500', 'acc_num')}
+                            className="text-[10px] px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-white/90 transition-colors flex items-center gap-1 cursor-pointer"
+                            title="Copiar número"
+                          >
+                            {copiedField === 'acc_num' ? (
+                              <Check className="w-3 h-3 text-emerald-400" />
+                            ) : (
+                              <Copy className="w-3 h-3" />
+                            )}
+                            <span>{copiedField === 'acc_num' ? (isEs ? 'Copiado' : 'Copied') : (isEs ? 'Copiar' : 'Copy')}</span>
+                          </button>
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-white/50">{isEs ? 'Titular:' : 'Beneficiary:'}</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-medium text-white truncate">SHER E PUNJAB</span>
+                          <button
+                            type="button"
+                            onClick={() => handleCopyText('SHER E PUNJAB', 'beneficiary_name')}
+                            className="text-[10px] px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-white/90 transition-colors flex items-center gap-1 cursor-pointer"
+                            title="Copiar Titular"
+                          >
+                            {copiedField === 'beneficiary_name' ? (
+                              <Check className="w-3 h-3 text-emerald-400" />
+                            ) : (
+                              <Copy className="w-3 h-3" />
+                            )}
+                            <span>{copiedField === 'beneficiary_name' ? (isEs ? 'Copiado' : 'Copied') : (isEs ? 'Copiar' : 'Copy')}</span>
+                          </button>
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-white/50">{isEs ? 'RUC / C.I.:' : 'ID / RUC:'}</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-mono text-white/90">1715256226001</span>
+                          <button
+                            type="button"
+                            onClick={() => handleCopyText('1715256226001', 'ruc_num')}
+                            className="text-[10px] px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-white/90 transition-colors flex items-center gap-1 cursor-pointer"
+                            title="Copiar RUC"
+                          >
+                            {copiedField === 'ruc_num' ? (
+                              <Check className="w-3 h-3 text-emerald-400" />
+                            ) : (
+                              <Copy className="w-3 h-3" />
+                            )}
+                            <span>{copiedField === 'ruc_num' ? (isEs ? 'Copiado' : 'Copied') : (isEs ? 'Copiar' : 'Copy')}</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-3 rounded-lg bg-[#D4AF37]/10 border border-[#D4AF37]/20 text-[11px] text-amber-200/90 leading-relaxed flex items-center justify-between">
+                      <span>{isEs ? 'Total a transferir:' : 'Total to transfer:'}</span>
+                      <span className="font-mono font-bold text-sm text-[#D4AF37]">${totalAmount.toFixed(2)} USD</span>
+                    </div>
+                  </div>
+
+                  {/* MANDATORY Transaction ID for Bank Transfer */}
+                  <div className={`p-4 rounded-2xl border transition-all space-y-2 ${
+                    transferTxId.trim()
+                      ? 'bg-emerald-950/20 border-emerald-500/40 ring-1 ring-emerald-500/30'
+                      : 'bg-amber-950/20 border-amber-500/40 ring-1 ring-amber-500/20'
+                  }`}>
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-bold text-white flex items-center gap-1.5">
+                        <span>
+                          {isEs ? 'ID de Transacción / N° de Comprobante Bancario' : 'Transaction ID / Bank Receipt Number'}
+                        </span>
+                        <span className="text-rose-400 font-extrabold text-sm">*</span>
+                      </label>
+                      {transferTxId.trim() ? (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold flex items-center gap-1">
+                          <Check className="w-3 h-3 text-emerald-400" />
+                          {isEs ? 'Listo para ordenar' : 'Ready to order'}
+                        </span>
+                      ) : (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3 text-amber-400" />
+                          {isEs ? 'Campo Obligatorio' : 'Required'}
+                        </span>
+                      )}
+                    </div>
+
+                    <input
+                      type="text"
+                      id="bank-tx-id-input"
+                      value={transferTxId}
+                      onChange={(e) => setTransferTxId(e.target.value)}
+                      placeholder={isEs ? 'Ej: 38491028 o número de transferencia' : 'E.g., 38491028 or transfer number'}
+                      className="w-full bg-black/60 border border-white/20 focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] rounded-xl p-3 text-xs sm:text-sm text-white placeholder-white/30 focus:outline-none font-mono"
+                    />
+
+                    {!transferTxId.trim() ? (
+                      <p className="text-[11px] text-amber-300/90 font-medium flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3 text-amber-400 shrink-0" />
+                        <span>
+                          {isEs
+                            ? 'Debes ingresar el ID de transacción de tu transferencia para poder confirmar el pedido.'
+                            : 'You must enter the transaction ID from your transfer to confirm your order.'}
+                        </span>
+                      </p>
+                    ) : (
+                      <p className="text-[11px] text-emerald-300 flex items-center gap-1">
+                        <Check className="w-3 h-3 text-emerald-400 shrink-0" />
+                        <span>
+                          {isEs ? 'Código registrado. Ya puedes confirmar tu pedido.' : 'Code registered. You can now confirm your order.'}
+                        </span>
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Payment Receipt / Comprobante Attachment Area */}
+                  <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-semibold text-white/90">
+                        {isEs ? 'Adjuntar Foto del Comprobante (Opcional):' : 'Attach Receipt Photo (Optional):'}
                       </label>
                       <span className="text-[10px] text-emerald-400 font-medium">
                         {isEs ? 'Verificación más rápida' : 'Faster verification'}
@@ -1534,7 +1550,6 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                           </button>
                         </div>
 
-                        {/* Image Preview Thumbnail */}
                         <div className="relative rounded-lg overflow-hidden border border-white/10 max-h-48 bg-black">
                           <img
                             src={receiptImage}
@@ -1550,7 +1565,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                   </div>
                 </div>
               ) : (
-                /* CASH ON DELIVERY DETAILS */
+                /* VIEW 3: CASH ON DELIVERY DETAILS */
                 <div className="space-y-4 animate-fade-in">
                   <div className="p-4 rounded-2xl bg-emerald-950/30 border border-emerald-500/30 space-y-2 text-xs">
                     <div className="flex items-center gap-2 text-emerald-400 font-bold">
@@ -1592,8 +1607,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 <span className="font-mono font-bold text-lg text-[#D4AF37]">${totalAmount.toFixed(2)} USD</span>
               </div>
 
-              {/* Strict Validation Helper when Transaction ID is missing for non-cash methods */}
-              {manualPaymentMethod === 'TRANSFER' && !transferTxId.trim() && (
+              {/* Strict Validation Helper when Transaction ID is missing for QR or Transfer */}
+              {(manualPaymentMethod === 'QR' || manualPaymentMethod === 'TRANSFER') && !transferTxId.trim() && (
                 <div className="p-3 rounded-xl bg-amber-950/40 border border-amber-500/40 text-[11px] text-amber-200 flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
                   <span>
@@ -1610,10 +1625,10 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 onClick={handleSendWhatsAppOrder}
                 disabled={
                   isSubmittingOrder ||
-                  (manualPaymentMethod === 'TRANSFER' && !transferTxId.trim())
+                  ((manualPaymentMethod === 'QR' || manualPaymentMethod === 'TRANSFER') && !transferTxId.trim())
                 }
                 className={`w-full py-4 px-4 rounded-xl font-bold text-sm sm:text-base transition-all shadow-lg flex items-center justify-between group ${
-                  manualPaymentMethod === 'TRANSFER' && !transferTxId.trim()
+                  (manualPaymentMethod === 'QR' || manualPaymentMethod === 'TRANSFER') && !transferTxId.trim()
                     ? 'bg-zinc-800 text-zinc-400 border border-zinc-700 cursor-not-allowed opacity-60'
                     : 'bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 hover:brightness-110 active:scale-98 text-white shadow-emerald-900/40 cursor-pointer'
                 }`}
@@ -1631,7 +1646,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                       {isEs ? 'Confirmar y Enviar por WhatsApp' : 'Confirm & Send via WhatsApp'}
                     </div>
                     <div className="text-[11px] font-normal text-emerald-100">
-                      {manualPaymentMethod === 'TRANSFER'
+                      {manualPaymentMethod === 'QR' || manualPaymentMethod === 'TRANSFER'
                         ? transferTxId.trim()
                           ? isEs
                             ? `✓ ID: ${transferTxId.slice(0, 12)} — Enviar y verificar`
@@ -1663,20 +1678,6 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
           </>
         )}
       </div>
-
-      {/* PayPhone Card Payment Modal for International & Domestic Cards */}
-      {isPayPhoneModalOpen && (
-        <PayPhoneModal
-          isOpen={isPayPhoneModalOpen}
-          onClose={() => setIsPayPhoneModalOpen(false)}
-          items={items}
-          details={details}
-          subtotal={subtotal}
-          deliveryFee={deliveryFee}
-          total={totalAmount}
-          currentLang={currentLang}
-        />
-      )}
 
       {/* Full-Screen Deuna QR Code Modal for Easy Scanning */}
       {isQrZoomOpen && (

@@ -26,7 +26,7 @@ export function generateWhatsAppOrderUrl(
   deliveryFee: number,
   total: number,
   lang: Language = 'es',
-  paymentMethod: 'TRANSFER' | 'CASH' | 'CARD' | 'PAYPHONE' = 'TRANSFER',
+  paymentMethod: 'QR' | 'TRANSFER' | 'CASH' | 'CARD' | 'PAYPHONE' = 'QR',
   orderNumber?: string,
   transferTransactionId?: string,
   hasReceiptAttachment: boolean = false,
@@ -61,21 +61,30 @@ export function generateWhatsAppOrderUrl(
     message += `🧾 *Código de Pedido:* #${orderNumber}\n`;
   }
   message += `━━━━━━━━━━━━━━━━━━━━\n`;
-  if (paymentMethod === 'CARD' || paymentMethod === 'PAYPHONE') {
-    message += `💳 *MÉTODO DE PAGO:* 💳 Tarjeta de Crédito / Débito (PayPhone Internacional)\n`;
-    message += `🌐 *Estado:* Pago en proceso / Enlace PayPhone generado\n`;
+  if (paymentMethod === 'QR') {
+    message += `💳 *MÉTODO DE PAGO:* 📱 Pago con QR Deuna! / Banco Pichincha\n`;
+    message += `👤 *Titular Deuna:* Sukhjinder Boparai\n`;
+    if (transferTransactionId && transferTransactionId.trim()) {
+      message += `🔖 *ID TRANSACCIÓN / COMPROBANTE DEUNA:* ${sanitizeInput(transferTransactionId)}\n`;
+    }
+    if (hasReceiptAttachment) {
+      message += `📸 *Comprobante:* ✅ Captura de pago Deuna! adjunta\n`;
+    } else {
+      message += `📸 *Comprobante:* Adjunto comprobante a continuación en este chat\n`;
+    }
   } else if (paymentMethod === 'TRANSFER') {
-    message += `💳 *MÉTODO DE PAGO:* 🏦 Transferencia Bancaria / Deuna QR (Banco Pichincha)\n`;
+    message += `💳 *MÉTODO DE PAGO:* 🏦 Transferencia Bancaria (Banco Pichincha)\n`;
+    message += `📌 *Cuenta:* Ahorros 3031633500 (SHER E PUNJAB - RUC 1715256226001)\n`;
     if (transferTransactionId && transferTransactionId.trim()) {
       message += `🔖 *N° DE COMPROBANTE / ID TRANSACCIÓN:* ${sanitizeInput(transferTransactionId)}\n`;
     }
     if (hasReceiptAttachment) {
       message += `📸 *Comprobante:* ✅ Foto de comprobante adjunta\n`;
     } else {
-      message += `📸 *Comprobante:* Adjunto comprobante a continuación\n`;
+      message += `📸 *Comprobante:* Adjunto comprobante a continuación en este chat\n`;
     }
   } else {
-    message += `💵 *MÉTODO DE PAGO:* Efectivo contra entrega\n`;
+    message += `💵 *MÉTODO DE PAGO:* 💵 Efectivo contra entrega (Al repartidor)\n`;
     if (cashBillAmount && cashBillAmount.trim()) {
       message += `💵 *Paga con billete de:* $${sanitizeInput(cashBillAmount)} USD (Requiere cambio)\n`;
     }

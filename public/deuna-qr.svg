@@ -1,151 +1,399 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 560" width="100%" height="100%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 450 680" width="100%" height="100%" style="border-radius: 20px; overflow: hidden; background: #2E1554;">
   <defs>
-    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#141416" />
-      <stop offset="50%" stop-color="#1C1B22" />
-      <stop offset="100%" stop-color="#0F0E13" />
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#361765" />
+      <stop offset="50%" stop-color="#2D1354" />
+      <stop offset="100%" stop-color="#1E0B3C" />
     </linearGradient>
-    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FCE082" />
-      <stop offset="50%" stop-color="#D4AF37" />
-      <stop offset="100%" stop-color="#997819" />
-    </linearGradient>
+    <filter id="cardShadow" x="-10%" y="-10%" width="120%" height="125%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.45" />
+    </filter>
   </defs>
-  <!-- Card Background -->
-  <rect x="0" y="0" width="400" height="560" rx="28" fill="url(#cardGrad)" stroke="#D4AF37" stroke-width="2" />
-  
-  <!-- Header Badges -->
-  <g transform="translate(25, 20)">
-    <rect x="0" y="0" width="105" height="32" rx="16" fill="#24232C" stroke="#3A3845" stroke-width="1"/>
-    <circle cx="16" cy="16" r="8" fill="#10B981" />
-    <path d="M12 16 L15 19 L20 13" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-    <text x="32" y="20" fill="#E2E8F0" font-family="system-ui, sans-serif" font-size="12" font-weight="bold">Rápido</text>
 
-    <rect x="122" y="0" width="105" height="32" rx="16" fill="#24232C" stroke="#3A3845" stroke-width="1"/>
-    <circle cx="138" cy="16" r="8" fill="#3B82F6" />
-    <path d="M138 10 L144 13 V17 C144 20 138 22 138 22 C138 22 132 20 132 17 V13 Z" fill="none" stroke="#FFFFFF" stroke-width="1.5"/>
-    <text x="154" y="20" fill="#E2E8F0" font-family="system-ui, sans-serif" font-size="12" font-weight="bold">Seguro</text>
+  <!-- Background Flyer -->
+  <rect width="450" height="680" rx="24" fill="url(#bgGradient)" />
 
-    <rect x="245" y="0" width="105" height="32" rx="16" fill="#24232C" stroke="#3A3845" stroke-width="1"/>
-    <circle cx="261" cy="16" r="8" fill="#8B5CF6" />
-    <path d="M257 16 L260 19 L265 13" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-    <text x="277" y="20" fill="#E2E8F0" font-family="system-ui, sans-serif" font-size="12" font-weight="bold">Simple</text>
+  <!-- Top Title: PAGA AQUÍ CON -->
+  <text x="225" y="62" fill="#FFFFFF" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-size="15" font-weight="800" letter-spacing="2.5" text-anchor="middle">PAGA AQUÍ CON</text>
+
+  <!-- Logos: deuna! | BANCO PICHINCHA -->
+  <g transform="translate(70, 85)">
+    <!-- deuna! logo -->
+    <text x="50" y="32" fill="#24E5A3" font-family="'Plus Jakarta Sans', 'Segoe UI', system-ui, sans-serif" font-size="34" font-weight="900" font-style="italic" letter-spacing="-1">deuna!</text>
+    
+    <!-- Divider -->
+    <line x1="150" y1="8" x2="150" y2="40" stroke="#FFFFFF" stroke-opacity="0.3" stroke-width="1.5" />
+    
+    <!-- Banco Pichincha -->
+    <g transform="translate(170, 8)">
+      <!-- Yellow square icon with Pichincha symbol -->
+      <rect x="0" y="3" width="26" height="26" rx="4" fill="#FFDD00" />
+      <path d="M7 9 H19 V15 H13 V21 H7 Z" fill="#0A1E42" />
+      <path d="M13 15 H19 V21 H13 Z" fill="#0A1E42" opacity="0.4" />
+      <!-- Banco Pichincha Text -->
+      <text x="34" y="16" fill="#FFFFFF" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="12" font-weight="800" letter-spacing="0.5">BANCO</text>
+      <text x="34" y="27" fill="#FFFFFF" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="12" font-weight="800" letter-spacing="0.5">PICHINCHA</text>
+    </g>
   </g>
 
-  <!-- Phone icon badge -->
-  <g transform="translate(180, 68)">
-    <circle cx="20" cy="20" r="18" fill="#18181B" stroke="#D4AF37" stroke-width="1.5" />
-    <rect x="13" y="11" width="14" height="18" rx="2" fill="none" stroke="#D4AF37" stroke-width="1.5"/>
-    <circle cx="20" cy="25" r="1" fill="#D4AF37"/>
-    <rect x="15" y="14" width="4" height="4" fill="#D4AF37"/>
-    <rect x="21" y="14" width="4" height="4" fill="#D4AF37"/>
-    <rect x="15" y="19" width="4" height="4" fill="#D4AF37"/>
+  <!-- Central White Card Container -->
+  <g transform="translate(48, 148)" filter="url(#cardShadow)">
+    <rect width="354" height="340" rx="20" fill="#FFFFFF" />
+    
+    <!-- Outer QR Frame -->
+    <g transform="translate(32, 22)">
+      <!-- 29x29 Module Matrix QR Code for Deuna / Sukhjinder Boparai -->
+      <!-- TOP LEFT FINDER PATTERN (7x7) -->
+      <rect x="0" y="0" width="63" height="63" rx="8" fill="#000000" />
+      <rect x="9" y="9" width="45" height="45" rx="5" fill="#FFFFFF" />
+      <rect x="18" y="18" width="27" height="27" rx="3" fill="#000000" />
+
+      <!-- TOP RIGHT FINDER PATTERN (7x7) -->
+      <rect x="227" y="0" width="63" height="63" rx="8" fill="#000000" />
+      <rect x="236" y="9" width="45" height="45" rx="5" fill="#FFFFFF" />
+      <rect x="245" y="18" width="27" height="27" rx="3" fill="#000000" />
+
+      <!-- BOTTOM LEFT FINDER PATTERN (7x7) -->
+      <rect x="0" y="197" width="63" height="63" rx="8" fill="#000000" />
+      <rect x="9" y="206" width="45" height="45" rx="5" fill="#FFFFFF" />
+      <rect x="18" y="215" width="27" height="27" rx="3" fill="#000000" />
+
+      <!-- TIMING PATTERNS & ALIGNMENT MODULES -->
+      <!-- Top Horizontal Timing -->
+      <rect x="72" y="27" width="9" height="9" fill="#000000" />
+      <rect x="90" y="27" width="9" height="9" fill="#000000" />
+      <rect x="108" y="27" width="9" height="9" fill="#000000" />
+      <rect x="126" y="27" width="9" height="9" fill="#000000" />
+      <rect x="144" y="27" width="9" height="9" fill="#000000" />
+      <rect x="162" y="27" width="9" height="9" fill="#000000" />
+      <rect x="180" y="27" width="9" height="9" fill="#000000" />
+      <rect x="198" y="27" width="9" height="9" fill="#000000" />
+      <rect x="216" y="27" width="9" height="9" fill="#000000" />
+
+      <!-- Left Vertical Timing -->
+      <rect x="27" y="72" width="9" height="9" fill="#000000" />
+      <rect x="27" y="90" width="9" height="9" fill="#000000" />
+      <rect x="27" y="108" width="9" height="9" fill="#000000" />
+      <rect x="27" y="126" width="9" height="9" fill="#000000" />
+      <rect x="27" y="144" width="9" height="9" fill="#000000" />
+      <rect x="27" y="162" width="9" height="9" fill="#000000" />
+      <rect x="27" y="180" width="9" height="9" fill="#000000" />
+
+      <!-- DATA CELLS & SCATTERED MODULES (Matching Deuna QR Matrix) -->
+      <!-- Row 0-6 surrounds -->
+      <rect x="72" y="0" width="9" height="9" fill="#000000" />
+      <rect x="90" y="0" width="18" height="9" fill="#000000" />
+      <rect x="126" y="0" width="9" height="9" fill="#000000" />
+      <rect x="153" y="0" width="18" height="9" fill="#000000" />
+      <rect x="189" y="0" width="9" height="9" fill="#000000" />
+      <rect x="207" y="0" width="9" height="9" fill="#000000" />
+
+      <rect x="72" y="9" width="18" height="9" fill="#000000" />
+      <rect x="117" y="9" width="9" height="9" fill="#000000" />
+      <rect x="144" y="9" width="9" height="9" fill="#000000" />
+      <rect x="171" y="9" width="18" height="9" fill="#000000" />
+      <rect x="207" y="9" width="9" height="9" fill="#000000" />
+
+      <rect x="72" y="18" width="9" height="9" fill="#000000" />
+      <rect x="99" y="18" width="18" height="9" fill="#000000" />
+      <rect x="135" y="18" width="18" height="9" fill="#000000" />
+      <rect x="180" y="18" width="9" height="9" fill="#000000" />
+      <rect x="207" y="18" width="9" height="9" fill="#000000" />
+
+      <rect x="72" y="36" width="18" height="9" fill="#000000" />
+      <rect x="108" y="36" width="9" height="9" fill="#000000" />
+      <rect x="135" y="36" width="9" height="9" fill="#000000" />
+      <rect x="162" y="36" width="18" height="9" fill="#000000" />
+      <rect x="198" y="36" width="18" height="9" fill="#000000" />
+
+      <rect x="81" y="45" width="9" height="9" fill="#000000" />
+      <rect x="99" y="45" width="18" height="9" fill="#000000" />
+      <rect x="126" y="45" width="18" height="9" fill="#000000" />
+      <rect x="153" y="45" width="9" height="9" fill="#000000" />
+      <rect x="180" y="45" width="18" height="9" fill="#000000" />
+      <rect x="216" y="45" width="9" height="9" fill="#000000" />
+
+      <rect x="72" y="54" width="9" height="9" fill="#000000" />
+      <rect x="90" y="54" width="9" height="9" fill="#000000" />
+      <rect x="117" y="54" width="27" height="9" fill="#000000" />
+      <rect x="162" y="54" width="9" height="9" fill="#000000" />
+      <rect x="189" y="54" width="18" height="9" fill="#000000" />
+
+      <!-- Row 7 to 20 -->
+      <rect x="0" y="72" width="18" height="9" fill="#000000" />
+      <rect x="45" y="72" width="9" height="9" fill="#000000" />
+      <rect x="63" y="72" width="18" height="9" fill="#000000" />
+      <rect x="99" y="72" width="18" height="9" fill="#000000" />
+      <rect x="126" y="72" width="9" height="9" fill="#000000" />
+      <rect x="144" y="72" width="18" height="9" fill="#000000" />
+      <rect x="180" y="72" width="9" height="9" fill="#000000" />
+      <rect x="198" y="72" width="27" height="9" fill="#000000" />
+      <rect x="234" y="72" width="9" height="9" fill="#000000" />
+      <rect x="252" y="72" width="18" height="9" fill="#000000" />
+      <rect x="279" y="72" width="9" height="9" fill="#000000" />
+
+      <rect x="9" y="81" width="9" height="9" fill="#000000" />
+      <rect x="36" y="81" width="18" height="9" fill="#000000" />
+      <rect x="72" y="81" width="9" height="9" fill="#000000" />
+      <rect x="90" y="81" width="18" height="9" fill="#000000" />
+      <rect x="117" y="81" width="9" height="9" fill="#000000" />
+      <rect x="135" y="81" width="9" height="9" fill="#000000" />
+      <rect x="162" y="81" width="18" height="9" fill="#000000" />
+      <rect x="189" y="81" width="9" height="9" fill="#000000" />
+      <rect x="216" y="81" width="18" height="9" fill="#000000" />
+      <rect x="243" y="81" width="9" height="9" fill="#000000" />
+      <rect x="270" y="81" width="18" height="9" fill="#000000" />
+
+      <rect x="0" y="90" width="9" height="9" fill="#000000" />
+      <rect x="18" y="90" width="18" height="9" fill="#000000" />
+      <rect x="54" y="90" width="18" height="9" fill="#000000" />
+      <rect x="81" y="90" width="9" height="9" fill="#000000" />
+      <rect x="108" y="90" width="18" height="9" fill="#000000" />
+      <rect x="144" y="90" width="9" height="9" fill="#000000" />
+      <rect x="171" y="90" width="18" height="9" fill="#000000" />
+      <rect x="207" y="90" width="9" height="9" fill="#000000" />
+      <rect x="225" y="90" width="27" height="9" fill="#000000" />
+      <rect x="261" y="90" width="9" height="9" fill="#000000" />
+      <rect x="279" y="90" width="9" height="9" fill="#000000" />
+
+      <rect x="9" y="99" width="9" height="9" fill="#000000" />
+      <rect x="36" y="99" width="9" height="9" fill="#000000" />
+      <rect x="63" y="99" width="27" height="9" fill="#000000" />
+      <rect x="99" y="99" width="9" height="9" fill="#000000" />
+      <rect x="126" y="99" width="9" height="9" fill="#000000" />
+      <rect x="153" y="99" width="18" height="9" fill="#000000" />
+      <rect x="180" y="99" width="27" height="9" fill="#000000" />
+      <rect x="216" y="99" width="9" height="9" fill="#000000" />
+      <rect x="243" y="99" width="18" height="9" fill="#000000" />
+      <rect x="270" y="99" width="9" height="9" fill="#000000" />
+
+      <!-- Center Logo Area (d! emblem) -->
+      <!-- Center white badge with rounded contour -->
+      <rect x="108" y="108" width="74" height="54" rx="14" fill="#FFFFFF" />
+      <rect x="110" y="110" width="70" height="50" rx="12" fill="#FFFFFF" stroke="#000000" stroke-width="1.5" stroke-opacity="0.08" />
+      
+      <!-- d! logo symbol inside QR -->
+      <text x="145" y="146" fill="#000000" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="34" font-weight="900" font-style="italic" text-anchor="middle" letter-spacing="-2">d!</text>
+
+      <!-- Modules surrounding center logo -->
+      <rect x="0" y="108" width="27" height="9" fill="#000000" />
+      <rect x="45" y="108" width="9" height="9" fill="#000000" />
+      <rect x="63" y="108" width="18" height="9" fill="#000000" />
+      <rect x="90" y="108" width="9" height="9" fill="#000000" />
+      <rect x="190" y="108" width="9" height="9" fill="#000000" />
+      <rect x="207" y="108" width="18" height="9" fill="#000000" />
+      <rect x="234" y="108" width="18" height="9" fill="#000000" />
+      <rect x="261" y="108" width="18" height="9" fill="#000000" />
+
+      <rect x="9" y="117" width="9" height="9" fill="#000000" />
+      <rect x="27" y="117" width="18" height="9" fill="#000000" />
+      <rect x="54" y="117" width="9" height="9" fill="#000000" />
+      <rect x="72" y="117" width="18" height="9" fill="#000000" />
+      <rect x="198" y="117" width="9" height="9" fill="#000000" />
+      <rect x="216" y="117" width="27" height="9" fill="#000000" />
+      <rect x="252" y="117" width="9" height="9" fill="#000000" />
+      <rect x="270" y="117" width="18" height="9" fill="#000000" />
+
+      <rect x="0" y="126" width="18" height="9" fill="#000000" />
+      <rect x="36" y="126" width="9" height="9" fill="#000000" />
+      <rect x="54" y="126" width="18" height="9" fill="#000000" />
+      <rect x="81" y="126" width="18" height="9" fill="#000000" />
+      <rect x="189" y="126" width="18" height="9" fill="#000000" />
+      <rect x="216" y="126" width="9" height="9" fill="#000000" />
+      <rect x="234" y="126" width="18" height="9" fill="#000000" />
+      <rect x="261" y="126" width="27" height="9" fill="#000000" />
+
+      <rect x="9" y="135" width="9" height="9" fill="#000000" />
+      <rect x="27" y="135" width="9" height="9" fill="#000000" />
+      <rect x="45" y="135" width="18" height="9" fill="#000000" />
+      <rect x="72" y="135" width="9" height="9" fill="#000000" />
+      <rect x="90" y="135" width="9" height="9" fill="#000000" />
+      <rect x="198" y="135" width="18" height="9" fill="#000000" />
+      <rect x="225" y="135" width="9" height="9" fill="#000000" />
+      <rect x="243" y="135" width="18" height="9" fill="#000000" />
+      <rect x="270" y="135" width="9" height="9" fill="#000000" />
+
+      <rect x="0" y="144" width="9" height="9" fill="#000000" />
+      <rect x="18" y="144" width="18" height="9" fill="#000000" />
+      <rect x="45" y="144" width="9" height="9" fill="#000000" />
+      <rect x="63" y="144" width="27" height="9" fill="#000000" />
+      <rect x="189" y="144" width="9" height="9" fill="#000000" />
+      <rect x="207" y="144" width="18" height="9" fill="#000000" />
+      <rect x="234" y="144" width="9" height="9" fill="#000000" />
+      <rect x="252" y="144" width="18" height="9" fill="#000000" />
+      <rect x="279" y="144" width="9" height="9" fill="#000000" />
+
+      <rect x="9" y="153" width="9" height="9" fill="#000000" />
+      <rect x="27" y="153" width="18" height="9" fill="#000000" />
+      <rect x="54" y="153" width="18" height="9" fill="#000000" />
+      <rect x="81" y="153" width="9" height="9" fill="#000000" />
+      <rect x="99" y="153" width="18" height="9" fill="#000000" />
+      <rect x="180" y="153" width="9" height="9" fill="#000000" />
+      <rect x="198" y="153" width="18" height="9" fill="#000000" />
+      <rect x="225" y="153" width="27" height="9" fill="#000000" />
+      <rect x="261" y="153" width="9" height="9" fill="#000000" />
+      <rect x="279" y="153" width="9" height="9" fill="#000000" />
+
+      <!-- Lower region modules -->
+      <rect x="0" y="162" width="18" height="9" fill="#000000" />
+      <rect x="27" y="162" width="9" height="9" fill="#000000" />
+      <rect x="45" y="162" width="18" height="9" fill="#000000" />
+      <rect x="72" y="162" width="18" height="9" fill="#000000" />
+      <rect x="99" y="162" width="9" height="9" fill="#000000" />
+      <rect x="117" y="162" width="18" height="9" fill="#000000" />
+      <rect x="144" y="162" width="18" height="9" fill="#000000" />
+      <rect x="171" y="162" width="9" height="9" fill="#000000" />
+      <rect x="189" y="162" width="27" height="9" fill="#000000" />
+      <rect x="225" y="162" width="9" height="9" fill="#000000" />
+      <rect x="243" y="162" width="18" height="9" fill="#000000" />
+      <rect x="270" y="162" width="18" height="9" fill="#000000" />
+
+      <rect x="9" y="171" width="9" height="9" fill="#000000" />
+      <rect x="36" y="171" width="18" height="9" fill="#000000" />
+      <rect x="63" y="171" width="9" height="9" fill="#000000" />
+      <rect x="81" y="171" width="18" height="9" fill="#000000" />
+      <rect x="108" y="171" width="18" height="9" fill="#000000" />
+      <rect x="135" y="171" width="9" height="9" fill="#000000" />
+      <rect x="153" y="171" width="18" height="9" fill="#000000" />
+      <rect x="180" y="171" width="9" height="9" fill="#000000" />
+      <rect x="198" y="171" width="18" height="9" fill="#000000" />
+      <rect x="225" y="171" width="18" height="9" fill="#000000" />
+      <rect x="252" y="171" width="9" height="9" fill="#000000" />
+      <rect x="270" y="171" width="9" height="9" fill="#000000" />
+
+      <rect x="0" y="180" width="9" height="9" fill="#000000" />
+      <rect x="18" y="180" width="18" height="9" fill="#000000" />
+      <rect x="45" y="180" width="9" height="9" fill="#000000" />
+      <rect x="63" y="180" width="18" height="9" fill="#000000" />
+      <rect x="90" y="180" width="9" height="9" fill="#000000" />
+      <rect x="117" y="180" width="9" height="9" fill="#000000" />
+      <rect x="135" y="180" width="18" height="9" fill="#000000" />
+      <rect x="162" y="180" width="18" height="9" fill="#000000" />
+      <rect x="189" y="180" width="9" height="9" fill="#000000" />
+      <rect x="207" y="180" width="27" height="9" fill="#000000" />
+      <rect x="243" y="180" width="9" height="9" fill="#000000" />
+      <rect x="261" y="180" width="18" height="9" fill="#000000" />
+
+      <!-- Row 22 to 28 (Right of Bottom-Left finder) -->
+      <rect x="72" y="198" width="18" height="9" fill="#000000" />
+      <rect x="99" y="198" width="9" height="9" fill="#000000" />
+      <rect x="117" y="198" width="18" height="9" fill="#000000" />
+      <rect x="144" y="198" width="9" height="9" fill="#000000" />
+      <rect x="162" y="198" width="18" height="9" fill="#000000" />
+      <rect x="189" y="198" width="18" height="9" fill="#000000" />
+      <rect x="216" y="198" width="9" height="9" fill="#000000" />
+      <rect x="234" y="198" width="18" height="9" fill="#000000" />
+      <rect x="261" y="198" width="9" height="9" fill="#000000" />
+      <rect x="279" y="198" width="9" height="9" fill="#000000" />
+
+      <rect x="81" y="207" width="9" height="9" fill="#000000" />
+      <rect x="99" y="207" width="18" height="9" fill="#000000" />
+      <rect x="126" y="207" width="9" height="9" fill="#000000" />
+      <rect x="144" y="207" width="18" height="9" fill="#000000" />
+      <rect x="171" y="207" width="9" height="9" fill="#000000" />
+      <rect x="189" y="207" width="9" height="9" fill="#000000" />
+      <rect x="207" y="207" width="18" height="9" fill="#000000" />
+      <rect x="234" y="207" width="9" height="9" fill="#000000" />
+      <rect x="252" y="207" width="18" height="9" fill="#000000" />
+      <rect x="279" y="207" width="9" height="9" fill="#000000" />
+
+      <rect x="72" y="216" width="9" height="9" fill="#000000" />
+      <rect x="90" y="216" width="18" height="9" fill="#000000" />
+      <rect x="117" y="216" width="9" height="9" fill="#000000" />
+      <rect x="135" y="216" width="18" height="9" fill="#000000" />
+      <rect x="162" y="216" width="9" height="9" fill="#000000" />
+      <rect x="180" y="216" width="18" height="9" fill="#000000" />
+      <rect x="207" y="216" width="9" height="9" fill="#000000" />
+      <rect x="225" y="216" width="27" height="9" fill="#000000" />
+      <rect x="261" y="216" width="18" height="9" fill="#000000" />
+
+      <rect x="72" y="225" width="18" height="9" fill="#000000" />
+      <rect x="99" y="225" width="18" height="9" fill="#000000" />
+      <rect x="126" y="225" width="9" height="9" fill="#000000" />
+      <rect x="144" y="225" width="18" height="9" fill="#000000" />
+      <rect x="171" y="225" width="18" height="9" fill="#000000" />
+      <rect x="198" y="225" width="9" height="9" fill="#000000" />
+      <rect x="216" y="225" width="18" height="9" fill="#000000" />
+      <rect x="243" y="225" width="18" height="9" fill="#000000" />
+      <rect x="270" y="225" width="9" height="9" fill="#000000" />
+
+      <rect x="81" y="234" width="9" height="9" fill="#000000" />
+      <rect x="99" y="234" width="9" height="9" fill="#000000" />
+      <rect x="117" y="234" width="18" height="9" fill="#000000" />
+      <rect x="144" y="234" width="9" height="9" fill="#000000" />
+      <rect x="162" y="234" width="18" height="9" fill="#000000" />
+      <rect x="189" y="234" width="9" height="9" fill="#000000" />
+      <rect x="207" y="234" width="18" height="9" fill="#000000" />
+      <rect x="234" y="234" width="9" height="9" fill="#000000" />
+      <rect x="252" y="234" width="18" height="9" fill="#000000" />
+      <rect x="279" y="234" width="9" height="9" fill="#000000" />
+
+      <rect x="72" y="243" width="9" height="9" fill="#000000" />
+      <rect x="90" y="243" width="18" height="9" fill="#000000" />
+      <rect x="117" y="243" width="9" height="9" fill="#000000" />
+      <rect x="135" y="243" width="27" height="9" fill="#000000" />
+      <rect x="171" y="243" width="9" height="9" fill="#000000" />
+      <rect x="189" y="243" width="18" height="9" fill="#000000" />
+      <rect x="216" y="243" width="18" height="9" fill="#000000" />
+      <rect x="243" y="243" width="9" height="9" fill="#000000" />
+      <rect x="261" y="243" width="18" height="9" fill="#000000" />
+
+      <rect x="72" y="252" width="18" height="9" fill="#000000" />
+      <rect x="99" y="252" width="9" height="9" fill="#000000" />
+      <rect x="117" y="252" width="18" height="9" fill="#000000" />
+      <rect x="144" y="252" width="18" height="9" fill="#000000" />
+      <rect x="171" y="252" width="9" height="9" fill="#000000" />
+      <rect x="189" y="252" width="9" height="9" fill="#000000" />
+      <rect x="207" y="252" width="27" height="9" fill="#000000" />
+      <rect x="243" y="252" width="18" height="9" fill="#000000" />
+      <rect x="270" y="252" width="18" height="9" fill="#000000" />
+    </g>
+
+    <!-- Account Name under QR -->
+    <text x="177" y="318" fill="#141416" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="14" font-weight="700" text-anchor="middle">Sukhjinder Boparai</text>
   </g>
 
-  <!-- QR Frame Container -->
-  <rect x="40" y="115" width="320" height="320" rx="20" fill="#FFFFFF" />
-  
-  <!-- High contrast QR Graphic -->
-  <!-- Top-Left Finder -->
-  <rect x="65" y="140" width="64" height="64" fill="#000000" rx="6" />
-  <rect x="73" y="148" width="48" height="48" fill="#FFFFFF" rx="4" />
-  <rect x="81" y="156" width="32" height="32" fill="#000000" rx="2" />
-  
-  <!-- Top-Right Finder -->
-  <rect x="271" y="140" width="64" height="64" fill="#000000" rx="6" />
-  <rect x="279" y="148" width="48" height="48" fill="#FFFFFF" rx="4" />
-  <rect x="287" y="156" width="32" height="32" fill="#000000" rx="2" />
+  <!-- Numbered Steps (1, 2, 3) -->
+  <g transform="translate(48, 510)">
+    <!-- Step 1 -->
+    <g transform="translate(0, 0)">
+      <circle cx="14" cy="14" r="13" fill="#24E5A3" />
+      <text x="14" y="19" fill="#0D3B2B" font-family="system-ui, sans-serif" font-size="14" font-weight="900" text-anchor="middle">1</text>
+      <text x="36" y="19" fill="#FFFFFF" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="14" font-weight="700">Escoge la opción pagar a QR</text>
+    </g>
 
-  <!-- Bottom-Left Finder -->
-  <rect x="65" y="346" width="64" height="64" fill="#000000" rx="6" />
-  <rect x="73" y="354" width="48" height="48" fill="#FFFFFF" rx="4" />
-  <rect x="81" y="362" width="32" height="32" fill="#000000" rx="2" />
+    <!-- Step 2 -->
+    <g transform="translate(0, 36)">
+      <circle cx="14" cy="14" r="13" fill="#24E5A3" />
+      <text x="14" y="19" fill="#0D3B2B" font-family="system-ui, sans-serif" font-size="14" font-weight="900" text-anchor="middle">2</text>
+      <text x="36" y="19" fill="#FFFFFF" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="14" font-weight="700">Escanea el código QR</text>
+    </g>
 
-  <!-- Timing Patterns & QR Data Grid -->
-  <g fill="#000000">
-    <!-- QR Data Elements -->
-    <rect x="140" y="142" width="10" height="10"/>
-    <rect x="160" y="142" width="10" height="10"/>
-    <rect x="190" y="142" width="10" height="10"/>
-    <rect x="210" y="142" width="10" height="10"/>
-    <rect x="240" y="142" width="10" height="10"/>
-
-    <rect x="140" y="162" width="10" height="20"/>
-    <rect x="170" y="162" width="20" height="10"/>
-    <rect x="200" y="162" width="10" height="10"/>
-    <rect x="230" y="162" width="20" height="10"/>
-
-    <rect x="140" y="192" width="30" height="10"/>
-    <rect x="180" y="192" width="10" height="20"/>
-    <rect x="210" y="192" width="20" height="10"/>
-    <rect x="240" y="192" width="10" height="20"/>
-
-    <!-- Left side data -->
-    <rect x="65" y="215" width="10" height="20"/>
-    <rect x="85" y="215" width="20" height="10"/>
-    <rect x="115" y="215" width="15" height="15"/>
-    <rect x="65" y="245" width="30" height="10"/>
-    <rect x="105" y="245" width="10" height="20"/>
-    <rect x="80" y="270" width="20" height="20"/>
-    <rect x="110" y="270" width="20" height="10"/>
-    <rect x="65" y="300" width="20" height="10"/>
-    <rect x="95" y="300" width="10" height="20"/>
-    <rect x="115" y="300" width="15" height="15"/>
-
-    <!-- Right side data -->
-    <rect x="270" y="215" width="20" height="10"/>
-    <rect x="300" y="215" width="10" height="20"/>
-    <rect x="320" y="215" width="15" height="15"/>
-    <rect x="270" y="245" width="10" height="20"/>
-    <rect x="290" y="245" width="20" height="10"/>
-    <rect x="320" y="245" width="15" height="25"/>
-    <rect x="270" y="275" width="30" height="10"/>
-    <rect x="310" y="275" width="10" height="20"/>
-    <rect x="270" y="305" width="20" height="10"/>
-    <rect x="300" y="305" width="35" height="10"/>
-
-    <!-- Bottom side data -->
-    <rect x="140" y="346" width="20" height="20"/>
-    <rect x="170" y="346" width="10" height="30"/>
-    <rect x="190" y="346" width="30" height="10"/>
-    <rect x="230" y="346" width="20" height="10"/>
-    <rect x="260" y="346" width="10" height="20"/>
-    <rect x="280" y="346" width="20" height="10"/>
-    <rect x="310" y="346" width="15" height="20"/>
-
-    <rect x="140" y="380" width="30" height="10"/>
-    <rect x="180" y="380" width="20" height="20"/>
-    <rect x="210" y="380" width="10" height="10"/>
-    <rect x="230" y="380" width="30" height="10"/>
-    <rect x="270" y="380" width="20" height="20"/>
-    <rect x="300" y="380" width="25" height="10"/>
-
-    <rect x="140" y="400" width="20" height="10"/>
-    <rect x="170" y="400" width="30" height="10"/>
-    <rect x="210" y="400" width="20" height="10"/>
-    <rect x="240" y="400" width="10" height="10"/>
-    <rect x="260" y="400" width="30" height="10"/>
-    <rect x="300" y="400" width="25" height="10"/>
+    <!-- Step 3 -->
+    <g transform="translate(0, 72)">
+      <circle cx="14" cy="14" r="13" fill="#24E5A3" />
+      <text x="14" y="19" fill="#0D3B2B" font-family="system-ui, sans-serif" font-size="14" font-weight="900" text-anchor="middle">3</text>
+      <text x="36" y="19" fill="#FFFFFF" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="14" font-weight="700">Ingresa el monto, paga y ¡listo!</text>
+    </g>
   </g>
 
-  <!-- Center Deuna Logo (d!) -->
-  <circle cx="200" cy="275" r="32" fill="#FFFFFF" />
-  <circle cx="200" cy="275" r="28" fill="#18181B" />
-  <text x="200" y="286" text-anchor="middle" fill="#00E5FF" font-family="system-ui, sans-serif" font-size="26" font-style="italic" font-weight="900">d!</text>
+  <!-- Footer: DISPONIBLE EN: App Store | Google Play -->
+  <g transform="translate(85, 638)">
+    <text x="0" y="15" fill="#FFFFFF" fill-opacity="0.7" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="10" font-weight="800" letter-spacing="1">DISPONIBLE EN:</text>
+    
+    <!-- App Store Pill -->
+    <g transform="translate(100, 2)">
+      <rect width="84" height="20" rx="10" fill="#000000" fill-opacity="0.35" stroke="#FFFFFF" stroke-opacity="0.2" stroke-width="1" />
+      <path d="M12 5 C11 5 10 6 10 7 C10 8 11 9 12 9 C13 9 14 8 14 7 C14 6 13 5 12 5 Z M10 10 C8 10 7 12 7 14 C7 17 9 19 10 19 C11 19 11 18 12 18 C13 18 13 19 14 19 C15 19 17 17 17 14 C17 12 15 10 14 10 C13 10 13 11 12 11 C11 11 11 10 10 10 Z" fill="#FFFFFF" transform="scale(0.8) translate(3, 1)" />
+      <text x="26" y="14" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="9" font-weight="700">App Store</text>
+    </g>
 
-  <!-- Titular Info -->
-  <text x="200" y="458" text-anchor="middle" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="14" font-weight="bold" letter-spacing="0.5">Sukhjinder Boparai</text>
-  
-  <!-- Divider -->
-  <line x1="80" y1="472" x2="320" y2="472" stroke="#3A3845" stroke-width="1" stroke-dasharray="4 4" />
-
-  <!-- Restaurant Greeting -->
-  <text x="200" y="492" text-anchor="middle" fill="#D4AF37" font-family="Georgia, serif" font-size="13" font-weight="bold">¡Gracias por elegir Sher e Punjab!</text>
-  <text x="200" y="510" text-anchor="middle" fill="#A1A1AA" font-family="Georgia, serif" font-style="italic" font-size="12">Agradecemos tu preferencia</text>
-  
-  <!-- Heart and Location -->
-  <g transform="translate(195, 520)">
-    <path d="M5 2 C5 2, 2 0, 1 2 C0 4, 3 7, 5 9 C7 7, 10 4, 9 2 C8 0, 5 2, 5 2 Z" fill="#D4AF37" />
+    <!-- Google Play Pill -->
+    <g transform="translate(192, 2)">
+      <rect width="86" height="20" rx="10" fill="#000000" fill-opacity="0.35" stroke="#FFFFFF" stroke-opacity="0.2" stroke-width="1" />
+      <!-- Play Icon -->
+      <polygon points="10,6 18,10 10,14" fill="#24E5A3" />
+      <text x="24" y="14" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="9" font-weight="700">Google Play</text>
+    </g>
   </g>
-  <text x="200" y="542" text-anchor="middle" fill="#E2E8F0" font-family="system-ui, sans-serif" font-size="10" font-weight="bold" letter-spacing="2">QUITO • CUMBAYÁ</text>
 </svg>

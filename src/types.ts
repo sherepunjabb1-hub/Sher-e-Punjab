@@ -155,7 +155,7 @@ export interface OrderRecord {
   subtotal: number;
   deliveryFee: number;
   total: number;
-  paymentMethod: 'PAYPHONE' | 'CARD' | 'CASH' | 'TRANSFER';
+  paymentMethod: 'QR' | 'TRANSFER' | 'CASH' | 'PAYPHONE' | 'CARD';
   paymentStatus: 'PAID' | 'PENDING' | 'FAILED';
   isVerified: boolean;
   transferTransactionId?: string;
