@@ -65,12 +65,12 @@ export function generateWhatsAppOrderUrl(
     message += `💳 *MÉTODO DE PAGO:* 💳 Tarjeta de Crédito / Débito (PayPhone Internacional)\n`;
     message += `🌐 *Estado:* Pago en proceso / Enlace PayPhone generado\n`;
   } else if (paymentMethod === 'TRANSFER') {
-    message += `💳 *MÉTODO DE PAGO:* 🏦 Transferencia Bancaria (Banco Pichincha / Deuna)\n`;
+    message += `💳 *MÉTODO DE PAGO:* 🏦 Transferencia Bancaria / Deuna QR (Banco Pichincha)\n`;
     if (transferTransactionId && transferTransactionId.trim()) {
-      message += `🔖 *N° de Comprobante / Tx:* ${sanitizeInput(transferTransactionId)}\n`;
+      message += `🔖 *N° DE COMPROBANTE / ID TRANSACCIÓN:* ${sanitizeInput(transferTransactionId)}\n`;
     }
     if (hasReceiptAttachment) {
-      message += `📸 *Comprobante:* ✅ Adjunto foto de comprobante en este chat\n`;
+      message += `📸 *Comprobante:* ✅ Foto de comprobante adjunta\n`;
     } else {
       message += `📸 *Comprobante:* Adjunto comprobante a continuación\n`;
     }
