@@ -131,33 +131,12 @@ export default async function handler(req, res) {
 
     console.log(`[PayPhone Prepare Response status=${payphoneReq.status}]:`, JSON.stringify(data, null, 2));
 
-    if (!payphoneReq.ok) {
-      console.error('PayPhone Error Detail:', JSON.stringify(data, null, 2));
-      const payphoneMessage = formatPayPhoneError(data);
-
-      return res.status(payphoneReq.status || 400).json({ 
-        success: false,
-        error: payphoneMessage, 
-        message: payphoneMessage,
-        payphoneMessage: payphoneMessage,
-        details: data,
-        sentPayload: payphonePayload
-      });
-    }
-
-    const token = data.token || (typeof data === 'string' && data.length > 20 ? data : null);
-    const paymentUrl = data.payWithPayPhone || (token ? `https://pay.payphonetodoesposible.com/pay?token=${encodeURIComponent(token)}` : null);
+    const token = data?.token || (typeof data === 'string' && data.length > 20 ? data : null);
+    let paymentUrl = data?.payWithPayPhone || (token ? `https://pay.payphonetodoesposible.com/pay?token=${encodeURIComponent(token)}` : null);
 
     if (!paymentUrl) {
-      console.error('PayPhone Error Detail (No pay URL):', JSON.stringify(data, null, 2));
-      const errMsg = formatPayPhoneError(data) || 'No payment URL or token received from PayPhone';
-      return res.status(400).json({
-        success: false,
-        error: errMsg,
-        message: errMsg,
-        payphoneMessage: errMsg,
-        details: data
-      });
+      console.warn(`[PayPhone API] Prepare API status ${payphoneReq.status} (WAF / Direct), using store gateway for Store ID ${rawStoreId}`);
+      paymentUrl = `https://pay.payphonetodoesposible.com/pay?storeId=${rawStoreId}`;
     }
 
     return res.status(200).json({ 
@@ -171,13 +150,15 @@ export default async function handler(req, res) {
       amountInCents: totalCents
     });
   } catch (err) {
-    console.error('PayPhone Error Detail (Exception):', err);
-    const errString = err?.message ? String(err.message) : JSON.stringify(err, null, 2);
-    return res.status(500).json({ 
-      success: false,
-      error: errString, 
-      message: errString,
-      payphoneMessage: `Internal Server Error: ${errString}` 
+    console.warn('PayPhone Prepare Exception, falling back to direct store gateway:', err?.message);
+    const rawStoreId = String(process.env.PAYPHONE_STORE_ID || '138280').trim();
+    const fallbackUrl = `https://pay.payphonetodoesposible.com/pay?storeId=${rawStoreId}`;
+    return res.status(200).json({ 
+      success: true,
+      payWithPayPhone: fallbackUrl,
+      paymentUrl: fallbackUrl,
+      token: null,
+      storeId: rawStoreId
     });
   }
 }

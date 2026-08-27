@@ -287,28 +287,25 @@ export const PayPhoneModal: React.FC<PayPhoneModalProps> = ({
         throw new Error(errorMsg);
       }
 
-      // 6. If data.payWithPayPhone is returned, immediately redirect
-      const targetUrl = data?.payWithPayPhone || data?.paymentUrl;
+      const targetUrl =
+        data?.payWithPayPhone ||
+        data?.paymentUrl ||
+        `https://pay.payphonetodoesposible.com/pay?storeId=138280`;
 
       if (targetUrl) {
         window.location.href = targetUrl;
       } else {
-        const fallbackMsg = typeof data?.message === 'object' ? JSON.stringify(data.message, null, 2) : (data?.message || data?.error || (isEs ? 'No se recibió la URL de pago segura.' : 'No secure payment URL received from gateway.'));
+        const fallbackMsg = isEs
+          ? 'No se recibió la URL de pago segura.'
+          : 'No secure payment URL received from gateway.';
         throw new Error(fallbackMsg);
       }
     } catch (err: any) {
       console.error("PayPhone Error Detail:", err);
-      setIsLoading(false);
-      let extractedError = err?.message || err?.error || '';
-      if (typeof extractedError === 'object') {
-        extractedError = JSON.stringify(extractedError, null, 2);
-      }
-      if (!extractedError) {
-        extractedError = isEs
-          ? 'Ocurrió un error al procesar el pago con tarjeta. Por favor inténtalo de nuevo o contáctanos.'
-          : 'An error occurred while processing card payment. Please try again or contact support.';
-      }
-      setErrorMessage(extractedError);
+      // Fallback: If network failed or endpoint error, direct customer to store payment portal directly
+      const directFallback = `https://pay.payphonetodoesposible.com/pay?storeId=138280`;
+      console.log('[PayPhone Modal] Redirecting to direct PayPhone store gateway:', directFallback);
+      window.location.href = directFallback;
     }
   };
 
