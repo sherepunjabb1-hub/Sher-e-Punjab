@@ -10,12 +10,34 @@ const STORAGE_KEYS = {
   ADMIN_PASSWORD_HASH: 'sherepunjab_admin_pass_v2',
   RESTAURANT_LOGO: 'sherepunjab_restaurant_logo_v1',
   HERO_BG: 'sherepunjab_hero_bg_v1',
+  PAYMENT_QR: 'sherepunjab_payment_qr_v1',
 };
 
 // Default initial admin password: "sherepunjab2025"
 // Master recovery secret code: "QUITO-SEP-ADMIN"
 const DEFAULT_PASSWORD = 'sherepunjab2025';
 export const MASTER_RECOVERY_CODE = 'QUITO-SEP-ADMIN';
+
+export function getStoredPaymentQr(): string | null {
+  try {
+    return localStorage.getItem(STORAGE_KEYS.PAYMENT_QR) || null;
+  } catch (err) {
+    console.error('Error reading stored payment QR', err);
+    return null;
+  }
+}
+
+export function setStoredPaymentQr(qrUrl: string | null): void {
+  try {
+    if (qrUrl && qrUrl.trim()) {
+      localStorage.setItem(STORAGE_KEYS.PAYMENT_QR, qrUrl.trim());
+    } else {
+      localStorage.removeItem(STORAGE_KEYS.PAYMENT_QR);
+    }
+  } catch (err) {
+    console.error('Error saving payment QR', err);
+  }
+}
 
 export function getStoredRestaurantLogo(): string | null {
   try {

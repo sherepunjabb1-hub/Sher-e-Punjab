@@ -52,6 +52,7 @@ interface CartDrawerProps {
   onUpdateQuantity: (cartItemId: string, newQty: number) => void;
   onRemoveItem: (cartItemId: string) => void;
   onClearCart: () => void;
+  customQrUrl?: string | null;
 }
 
 export const CartDrawer: React.FC<CartDrawerProps> = ({
@@ -62,9 +63,14 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   onUpdateQuantity,
   onRemoveItem,
   onClearCart,
+  customQrUrl,
 }) => {
   const t = TRANSLATIONS[currentLang];
   const isEs = currentLang === 'es';
+
+  // Base path aware QR URL
+  const defaultQrUrl = `${(import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL || '/'}deuna-qr.svg`.replace(/\/\//g, '/');
+  const activeQrSrc = (customQrUrl && customQrUrl.trim()) ? customQrUrl : defaultQrUrl;
 
   // Multi-step checkout state: 'cart' (Item selection & Customer Info) -> 'payment' (Payment Method, Bank Info, Tx ID & Receipt Attachment)
   const [checkoutStep, setCheckoutStep] = useState<'cart' | 'payment'>('cart');
@@ -1177,9 +1183,16 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                         title={isEs ? 'Clic para ampliar QR' : 'Click to enlarge QR'}
                       >
                         <img
-                          src="/deuna-qr.svg"
-                          alt="Deuna QR Sher e Punjab"
+                          src={activeQrSrc}
+                          alt="QR de Pago Deuna / Sher e Punjab"
                           className="w-full h-auto max-h-56 object-contain mx-auto"
+                          onError={(e) => {
+                            const target = e.currentTarget;
+                            if (!target.dataset.triedFallback) {
+                              target.dataset.triedFallback = 'true';
+                              target.src = '/deuna-qr.svg';
+                            }
+                          }}
                         />
                         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-xl gap-1 text-white text-xs font-bold">
                           <Maximize2 className="w-4 h-4 text-[#D4AF37]" />
@@ -1211,8 +1224,10 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                         <span>{isEs ? 'Ver QR en grande' : 'Enlarge QR'}</span>
                       </button>
                       <a
-                        href="/deuna-qr.svg"
-                        download="Sher-e-Punjab-Deuna-QR.svg"
+                        href={activeQrSrc}
+                        download="Sher-e-Punjab-QR.png"
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="text-xs px-3 py-1.5 rounded-lg bg-[#D4AF37]/20 hover:bg-[#D4AF37]/30 text-[#D4AF37] font-medium flex items-center gap-1.5 transition-colors"
                       >
                         <Download className="w-3.5 h-3.5" />
@@ -1710,9 +1725,16 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
             {/* Large QR Display */}
             <div className="bg-white p-4 rounded-2xl shadow-xl mx-auto max-w-[280px]">
               <img
-                src="/deuna-qr.svg"
-                alt="Deuna QR Sher e Punjab Fullscreen"
-                className="w-full h-auto object-contain mx-auto"
+                src={activeQrSrc}
+                alt="QR de Pago Deuna / Sher e Punjab Fullscreen"
+                className="w-full h-auto max-h-[60vh] object-contain mx-auto"
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (!target.dataset.triedFallback) {
+                    target.dataset.triedFallback = 'true';
+                    target.src = '/deuna-qr.svg';
+                  }
+                }}
               />
             </div>
 
@@ -1733,8 +1755,10 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 {isEs ? 'Cerrar' : 'Close'}
               </button>
               <a
-                href="/deuna-qr.svg"
-                download="Sher-e-Punjab-Deuna-QR.svg"
+                href={activeQrSrc}
+                download="Sher-e-Punjab-QR.png"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="flex-1 py-3 rounded-xl bg-[#D4AF37] hover:bg-[#C9A028] text-black font-bold text-xs transition-colors flex items-center justify-center gap-1.5"
               >
                 <Download className="w-4 h-4" />

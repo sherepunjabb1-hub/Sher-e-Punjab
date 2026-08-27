@@ -21,10 +21,12 @@ import {
   getStoredCategories,
   getStoredHeroBg,
   getStoredMenuItems,
+  getStoredPaymentQr,
   getStoredRestaurantLogo,
   setStoredCategories,
   setStoredHeroBg,
   setStoredMenuItems,
+  setStoredPaymentQr,
   setStoredRestaurantLogo,
 } from './storage';
 
@@ -186,16 +188,17 @@ export function subscribeToAdminAuth(
 }
 
 /**
- * Listen to real-time Restaurant Branding (Logo & Hero Background) in Firestore
+ * Listen to real-time Restaurant Branding (Logo, Hero Background, Payment QR) in Firestore
  */
 export function subscribeToRestaurantBranding(
-  onUpdate: (branding: { logoUrl: string | null; heroBgUrl: string | null }) => void,
+  onUpdate: (branding: { logoUrl: string | null; heroBgUrl: string | null; paymentQrUrl: string | null }) => void,
   onError?: (err: unknown) => void
 ): Unsubscribe {
   // Emit local cache immediately for instantaneous 0ms UI load
   const cachedLogo = getStoredRestaurantLogo();
   const cachedHeroBg = getStoredHeroBg();
-  onUpdate({ logoUrl: cachedLogo, heroBgUrl: cachedHeroBg });
+  const cachedPaymentQr = getStoredPaymentQr();
+  onUpdate({ logoUrl: cachedLogo, heroBgUrl: cachedHeroBg, paymentQrUrl: cachedPaymentQr });
 
   try {
     const brandingDocRef = doc(db, 'settings', 'restaurant_branding');
@@ -208,13 +211,16 @@ export function subscribeToRestaurantBranding(
             const data = docSnap.data();
             const logo = data?.logoUrl ? String(data.logoUrl).trim() : null;
             const heroBg = data?.heroBgUrl ? String(data.heroBgUrl).trim() : null;
+            const qr = data?.paymentQrUrl ? String(data.paymentQrUrl).trim() : null;
             setStoredRestaurantLogo(logo);
             setStoredHeroBg(heroBg);
-            onUpdate({ logoUrl: logo, heroBgUrl: heroBg });
+            setStoredPaymentQr(qr);
+            onUpdate({ logoUrl: logo, heroBgUrl: heroBg, paymentQrUrl: qr });
           } else {
             const localLogo = getStoredRestaurantLogo();
             const localBg = getStoredHeroBg();
-            onUpdate({ logoUrl: localLogo, heroBgUrl: localBg });
+            const localQr = getStoredPaymentQr();
+            onUpdate({ logoUrl: localLogo, heroBgUrl: localBg, paymentQrUrl: localQr });
           }
         } catch (innerErr) {
           console.warn('[Firestore Branding] Snapshot processing note:', innerErr);
@@ -225,14 +231,16 @@ export function subscribeToRestaurantBranding(
         if (onError) onError(error);
         const fallbackLogo = getStoredRestaurantLogo();
         const fallbackBg = getStoredHeroBg();
-        onUpdate({ logoUrl: fallbackLogo, heroBgUrl: fallbackBg });
+        const fallbackQr = getStoredPaymentQr();
+        onUpdate({ logoUrl: fallbackLogo, heroBgUrl: fallbackBg, paymentQrUrl: fallbackQr });
       }
     );
   } catch (err) {
     console.warn('[Firestore Branding] Initialization note:', err);
     const fallbackLogo = getStoredRestaurantLogo();
     const fallbackBg = getStoredHeroBg();
-    onUpdate({ logoUrl: fallbackLogo, heroBgUrl: fallbackBg });
+    const fallbackQr = getStoredPaymentQr();
+    onUpdate({ logoUrl: fallbackLogo, heroBgUrl: fallbackBg, paymentQrUrl: fallbackQr });
     return () => {};
   }
 }
@@ -330,6 +338,49 @@ export async function resetHeroBgInFirestore(): Promise<void> {
     );
   } catch (err) {
     console.warn('[Firestore HeroBg Reset] Reset locally:', err);
+  }
+}
+
+/**
+ * Save custom Payment QR image/URL to Firestore & local storage
+ */
+export async function savePaymentQrToFirestore(qrUrl: string | null): Promise<void> {
+  const cleanUrl = qrUrl ? qrUrl.trim() : null;
+  setStoredPaymentQr(cleanUrl);
+
+  try {
+    const brandingDocRef = doc(db, 'settings', 'restaurant_branding');
+    await setDoc(
+      brandingDocRef,
+      {
+        paymentQrUrl: cleanUrl || '',
+        updatedAt: new Date().toISOString(),
+      },
+      { merge: true }
+    );
+  } catch (err) {
+    console.warn('[Firestore Payment QR Save] Stored locally, will sync when online:', err);
+  }
+}
+
+/**
+ * Reset Payment QR to default official Deuna QR SVG
+ */
+export async function resetPaymentQrInFirestore(): Promise<void> {
+  setStoredPaymentQr(null);
+
+  try {
+    const brandingDocRef = doc(db, 'settings', 'restaurant_branding');
+    await setDoc(
+      brandingDocRef,
+      {
+        paymentQrUrl: '',
+        updatedAt: new Date().toISOString(),
+      },
+      { merge: true }
+    );
+  } catch (err) {
+    console.warn('[Firestore Payment QR Reset] Reset locally:', err);
   }
 }
 

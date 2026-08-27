@@ -16,11 +16,13 @@ import {
   getStoredCategories,
   getStoredHeroBg,
   getStoredMenuItems,
+  getStoredPaymentQr,
   getStoredRestaurantLogo,
   setStoredCart,
   setStoredCategories,
   setStoredHeroBg,
   setStoredMenuItems,
+  setStoredPaymentQr,
   setStoredRestaurantLogo,
 } from './utils/storage';
 import { generateWhatsAppOrderUrl } from './utils/whatsapp';
@@ -29,10 +31,12 @@ import {
   deleteMenuItemFromFirestore,
   resetCloudMenuToDefault,
   resetHeroBgInFirestore,
+  resetPaymentQrInFirestore,
   resetRestaurantLogoInFirestore,
   saveCategoryToFirestore,
   saveHeroBgToFirestore,
   saveMenuItemToFirestore,
+  savePaymentQrToFirestore,
   saveRestaurantLogoToFirestore,
   subscribeToAdminAuth,
   subscribeToCategories,
@@ -66,9 +70,10 @@ export default function App() {
 
   const t = TRANSLATIONS[currentLang];
 
-  // Restaurant Branding States (Logo & Full Hero Background)
+  // Restaurant Branding States (Logo, Full Hero Background & Payment QR)
   const [customLogoUrl, setCustomLogoUrl] = useState<string | null>(() => getStoredRestaurantLogo());
   const [heroBgUrl, setHeroBgUrl] = useState<string | null>(() => getStoredHeroBg());
+  const [paymentQrUrl, setPaymentQrUrl] = useState<string | null>(() => getStoredPaymentQr());
 
   // Menu data state (Starts with local cached seed for 0ms initial load, then live-syncs with Firestore)
   const [categories, setCategories] = useState<Category[]>(() => getStoredCategories());
@@ -91,12 +96,14 @@ export default function App() {
     // 3. Subscribe to Admin Auth settings
     const unsubAuth = subscribeToAdminAuth();
 
-    // 4. Subscribe to Restaurant Branding settings (Logo & Hero Background)
-    const unsubBranding = subscribeToRestaurantBranding(({ logoUrl, heroBgUrl: liveHeroBg }) => {
+    // 4. Subscribe to Restaurant Branding settings (Logo, Hero Background & Payment QR)
+    const unsubBranding = subscribeToRestaurantBranding(({ logoUrl, heroBgUrl: liveHeroBg, paymentQrUrl: liveQr }) => {
       setCustomLogoUrl(logoUrl);
       setHeroBgUrl(liveHeroBg);
+      setPaymentQrUrl(liveQr);
       setStoredRestaurantLogo(logoUrl);
       setStoredHeroBg(liveHeroBg);
+      setStoredPaymentQr(liveQr);
     });
 
     return () => {
@@ -396,6 +403,24 @@ export default function App() {
     }
   };
 
+  const handleSavePaymentQr = async (qrUrl: string | null) => {
+    setPaymentQrUrl(qrUrl);
+    try {
+      await savePaymentQrToFirestore(qrUrl);
+    } catch (err) {
+      console.error('Error saving payment QR to Firestore:', err);
+    }
+  };
+
+  const handleResetPaymentQr = async () => {
+    setPaymentQrUrl(null);
+    try {
+      await resetPaymentQrInFirestore();
+    } catch (err) {
+      console.error('Error resetting payment QR in Firestore:', err);
+    }
+  };
+
   // Filtered Menu Items for Customer Display
   const filteredMenuItems = useMemo(() => {
     return menuItems.filter((dish) => {
@@ -564,6 +589,7 @@ export default function App() {
         onUpdateQuantity={handleUpdateQuantity}
         onRemoveItem={handleRemoveItem}
         onClearCart={handleClearCart}
+        customQrUrl={paymentQrUrl}
       />
 
       {/* Admin Management Portal */}
@@ -581,10 +607,13 @@ export default function App() {
         onResetDefaultMenu={handleResetDefaultMenu}
         customLogoUrl={customLogoUrl}
         heroBgUrl={heroBgUrl}
+        customQrUrl={paymentQrUrl}
         onSaveLogo={handleSaveLogo}
         onResetLogo={handleResetLogo}
         onSaveHeroBg={handleSaveHeroBg}
         onResetHeroBg={handleResetHeroBg}
+        onSaveQrCode={handleSavePaymentQr}
+        onResetQrCode={handleResetPaymentQr}
       />
 
       {/* About, Location & Operating Hours Section */}

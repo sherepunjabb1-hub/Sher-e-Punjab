@@ -51,11 +51,12 @@
     },
     "RestaurantBranding": {
       "title": "RestaurantBranding",
-      "description": "Custom restaurant logo and hero background visual branding assets.",
+      "description": "Custom restaurant logo, hero background, and payment QR branding assets.",
       "type": "object",
       "properties": {
         "logoUrl": { "type": "string" },
         "heroBgUrl": { "type": "string" },
+        "paymentQrUrl": { "type": "string" },
         "updatedAt": { "type": "string" }
       }
     }

@@ -20,6 +20,7 @@ import {
   MapPin,
   Phone,
   Plus,
+  QrCode,
   RefreshCw,
   RotateCcw,
   Search,
@@ -30,16 +31,13 @@ import {
   Utensils,
   X,
 } from 'lucide-react';
-import { AddonOption, Category, Language, MenuItem, OrderRecord, SpiceLevel } from '../types';
+import { AddonOption, Category, Language, MenuItem, SpiceLevel } from '../types';
 import { TRANSLATIONS } from '../utils/translations';
 import { compressImageFile } from '../utils/storage';
 import {
   MASTER_RECOVERY_CODE,
   resetAdminPasswordWithMasterSecretCloud,
-  subscribeToOrders,
   updateAdminPasswordCloud,
-  updateOrderPaymentInFirestore,
-  updateOrderStatusInFirestore,
   verifyAdminPasswordCloud,
   verifyAdminPasswordFast,
 } from '../utils/firebaseStorage';
@@ -60,10 +58,13 @@ interface AdminPortalProps {
   onResetDefaultMenu: () => void;
   customLogoUrl?: string | null;
   heroBgUrl?: string | null;
+  customQrUrl?: string | null;
   onSaveLogo?: (logoUrl: string | null) => Promise<void> | void;
   onResetLogo?: () => Promise<void> | void;
   onSaveHeroBg?: (bgUrl: string | null) => Promise<void> | void;
   onResetHeroBg?: () => Promise<void> | void;
+  onSaveQrCode?: (qrUrl: string | null) => Promise<void> | void;
+  onResetQrCode?: () => Promise<void> | void;
 }
 
 export const AdminPortal: React.FC<AdminPortalProps> = ({
@@ -80,10 +81,13 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   onResetDefaultMenu,
   customLogoUrl,
   heroBgUrl,
+  customQrUrl,
   onSaveLogo,
   onResetLogo,
   onSaveHeroBg,
   onResetHeroBg,
+  onSaveQrCode,
+  onResetQrCode,
 }) => {
   const t = TRANSLATIONS[currentLang];
   const isEs = currentLang === 'es';
@@ -105,19 +109,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   );
 
   // Active Admin Tab
-  const [activeTab, setActiveTab] = useState<'dishes' | 'categories' | 'orders' | 'settings'>('dishes');
-
-  // Live Orders
-  const [orders, setOrders] = useState<OrderRecord[]>([]);
-
-  useEffect(() => {
-    if (isOpen) {
-      const unsub = subscribeToOrders((liveOrders) => {
-        setOrders(liveOrders);
-      });
-      return () => unsub();
-    }
-  }, [isOpen]);
+  const [activeTab, setActiveTab] = useState<'dishes' | 'categories' | 'settings'>('dishes');
 
   // Search & Filter
   const [adminSearch, setAdminSearch] = useState('');
@@ -152,8 +144,10 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   const [isSavingBg, setIsSavingBg] = useState(false);
   const [bgSuccessMsg, setBgSuccessMsg] = useState(false);
 
-  // Receipt image full-view modal
-  const [previewReceiptUrl, setPreviewReceiptUrl] = useState<string | null>(null);
+  // Option 3: Payment QR Code Settings
+  const [qrInputUrl, setQrInputUrl] = useState(customQrUrl || '');
+  const [isSavingQr, setIsSavingQr] = useState(false);
+  const [qrSuccessMsg, setQrSuccessMsg] = useState(false);
 
   useEffect(() => {
     setLogoInputUrl(customLogoUrl || '');
@@ -162,6 +156,10 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   useEffect(() => {
     setBgInputUrl(heroBgUrl || '');
   }, [heroBgUrl, isOpen]);
+
+  useEffect(() => {
+    setQrInputUrl(customQrUrl || '');
+  }, [customQrUrl, isOpen]);
 
   if (!isOpen) return null;
 
@@ -396,23 +394,6 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
             </button>
 
             <button
-              onClick={() => setActiveTab('orders')}
-              className={`px-4 py-2 rounded-full text-xs sm:text-sm font-bold transition-all flex items-center gap-2 ${
-                activeTab === 'orders'
-                  ? 'bg-[#D4AF37] text-black shadow-md shadow-[#D4AF37]/20'
-                  : 'bg-white/5 text-white/60 hover:text-white border border-white/10'
-              }`}
-            >
-              <ShoppingBag className="w-4 h-4" />
-              <span>{isEs ? 'Pedidos en Vivo' : 'Live Orders'}</span>
-              <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono ${
-                orders.length > 0 ? 'bg-emerald-500 text-black font-bold' : 'bg-black/30'
-              }`}>
-                {orders.length}
-              </span>
-            </button>
-
-            <button
               onClick={() => setActiveTab('settings')}
               className={`px-4 py-2 rounded-full text-xs sm:text-sm font-bold transition-all flex items-center gap-2 ${
                 activeTab === 'settings'
@@ -602,294 +583,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
             </div>
           )}
 
-          {/* TAB 3: LIVE ORDERS & MANUAL WHATSAPP VERIFICATIONS */}
-          {activeTab === 'orders' && (
-            <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 glass p-4 rounded-2xl border border-white/10">
-                <div>
-                  <h3 className="serif font-bold text-base text-[#F5F5F0]">
-                    {isEs ? 'Pedidos y Verificación Manual de Pagos' : 'Orders & Manual Payment Verification'}
-                  </h3>
-                  <p className="text-xs text-white/50">
-                    {isEs
-                      ? 'Monitoreo en tiempo real de transferencias bancarias y pedidos en efectivo para verificar por WhatsApp'
-                      : 'Real-time tracking of bank transfers and cash orders for manual verification via WhatsApp'}
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    <span>{orders.length} {isEs ? 'pedidos totales' : 'total orders'}</span>
-                  </span>
-                </div>
-              </div>
-
-              {orders.length === 0 ? (
-                <div className="p-8 text-center glass rounded-2xl border border-white/10 space-y-2">
-                  <ShoppingBag className="w-10 h-10 text-white/20 mx-auto" />
-                  <p className="text-sm font-semibold text-white/70">
-                    {isEs ? 'No hay pedidos recientes' : 'No recent orders'}
-                  </p>
-                  <p className="text-xs text-white/40">
-                    {isEs
-                      ? 'Los nuevos pedidos enviados por WhatsApp aparecerán automáticamente aquí para su verificación.'
-                      : 'New orders placed via WhatsApp will automatically appear here for verification.'}
-                  </p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {orders.map((order) => {
-                    const isTransfer = order.paymentMethod === 'TRANSFER';
-                    const isCard = order.paymentMethod === 'CARD' || order.paymentMethod === 'PAYPHONE';
-                    const isVerified = order.paymentStatus === 'PAID' || order.isVerified;
-
-                    return (
-                      <div
-                        key={order.id}
-                        className={`p-4 rounded-2xl border space-y-3 relative overflow-hidden transition-all ${
-                          isVerified
-                            ? 'glass border-emerald-500/30'
-                            : 'bg-black/60 border-amber-500/30 shadow-md shadow-amber-950/20'
-                        }`}
-                      >
-                        {/* Top Bar: Order Number & Payment Status */}
-                        <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
-                          <div>
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-mono font-bold text-[#D4AF37] text-sm">
-                                {order.orderNumber}
-                              </span>
-
-                              {isCard ? (
-                                isVerified ? (
-                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1">
-                                    <CheckCircle2 className="w-3 h-3" />
-                                    <span>{isEs ? 'TARJETA PAGADA (PAYPHONE)' : 'CARD PAID (PAYPHONE)'}</span>
-                                  </span>
-                                ) : (
-                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/40 flex items-center gap-1">
-                                    <CreditCard className="w-3 h-3" />
-                                    <span>{isEs ? 'TARJETA INT. (PAYPHONE)' : 'INT. CARD (PAYPHONE)'}</span>
-                                  </span>
-                                )
-                              ) : isTransfer ? (
-                                isVerified ? (
-                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1">
-                                    <CheckCircle2 className="w-3 h-3" />
-                                    <span>{isEs ? 'TRANSFERENCIA VERIFICADA' : 'TRANSFER VERIFIED'}</span>
-                                  </span>
-                                ) : (
-                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1 animate-pulse">
-                                    <Clock className="w-3 h-3" />
-                                    <span>{isEs ? 'PAGO POR VERIFICAR (PICHINCHA)' : 'PENDING VERIFICATION'}</span>
-                                  </span>
-                                )
-                              ) : (
-                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/40">
-                                  {isEs ? 'EFECTIVO (CONTRA ENTREGA)' : 'CASH ON DELIVERY'}
-                                </span>
-                              )}
-                            </div>
-                            <span className="text-[10px] text-white/40 font-mono">
-                              {new Date(order.createdAt).toLocaleString()}
-                            </span>
-                          </div>
-
-                          {/* Status update selector */}
-                          <select
-                            value={order.status || 'RECEIVED'}
-                            onChange={(e) =>
-                              updateOrderStatusInFirestore(
-                                order.id,
-                                e.target.value as OrderRecord['status']
-                              )
-                            }
-                            className="bg-black/60 border border-white/20 rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:border-[#D4AF37]"
-                          >
-                            <option value="RECEIVED">{isEs ? 'Recibido' : 'Received'}</option>
-                            <option value="PREPARING">{isEs ? 'En Cocina' : 'Preparing'}</option>
-                            <option value="ON_THE_WAY">{isEs ? 'En Camino' : 'On the Way'}</option>
-                            <option value="DELIVERED">{isEs ? 'Entregado' : 'Delivered'}</option>
-                            <option value="CANCELLED">{isEs ? 'Cancelado' : 'Cancelled'}</option>
-                          </select>
-                        </div>
-
-                        {/* Customer & Delivery Details */}
-                        <div className="bg-black/40 p-2.5 rounded-xl border border-white/5 space-y-1 text-xs">
-                          <div className="flex justify-between text-white/90 font-medium">
-                            <span className="font-semibold">{order.customer?.customerName || 'Cliente'}</span>
-                            <a
-                              href={`https://wa.me/${(order.customer?.customerPhone || '').replace(/\D/g, '')}`}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="font-mono text-[#D4AF37] hover:underline flex items-center gap-1"
-                              title="Chat directo de WhatsApp"
-                            >
-                              <Phone className="w-3 h-3 text-emerald-400" />
-                              <span>{order.customer?.customerPhone || ''}</span>
-                            </a>
-                          </div>
-                          {order.customer?.deliveryAddress && (
-                            <div className="text-[11px] text-white/60 flex items-start gap-1">
-                              <MapPin className="w-3 h-3 text-emerald-400 shrink-0 mt-0.5" />
-                              <span>{order.customer.deliveryAddress}</span>
-                            </div>
-                          )}
-                          {order.customer?.liveLocation?.mapsUrl && (
-                            <div className="text-[10px] text-emerald-300 flex items-center gap-1">
-                              <MapPin className="w-3 h-3 text-emerald-400 shrink-0" />
-                              <a
-                                href={order.customer.liveLocation.mapsUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="underline hover:text-white"
-                              >
-                                {isEs ? 'Ver ubicación GPS en vivo en Google Maps' : 'View live GPS on Maps'}
-                              </a>
-                            </div>
-                          )}
-                          {order.customer?.tableNumber && (
-                            <div className="text-[11px] text-amber-300">
-                              {isEs ? 'Mesa:' : 'Table:'} #{order.customer.tableNumber}
-                            </div>
-                          )}
-                          {order.customer?.assignedBranch && (
-                            <div className="text-[10px] text-white/40">
-                              {isEs ? 'Sucursal:' : 'Branch:'} {order.customer.assignedBranch.name}
-                            </div>
-                          )}
-                          {order.customer?.orderNotes && (
-                            <div className="text-[11px] text-amber-200/80 italic pt-0.5">
-                              "{order.customer.orderNotes}"
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Payment & Receipt Verification Information */}
-                        {(order.transferTransactionId || order.receiptImageData || order.cashBillAmount) && (
-                          <div className="p-2.5 rounded-xl bg-black/60 border border-[#D4AF37]/30 space-y-2 text-xs">
-                            <div className="text-[10px] font-bold uppercase tracking-wider text-[#D4AF37] flex items-center justify-between">
-                              <span>{isEs ? 'Datos de Pago y Comprobante' : 'Payment & Receipt Details'}</span>
-                              {order.receiptImageData && (
-                                <span className="text-emerald-400 font-normal normal-case flex items-center gap-1">
-                                  <ImageIcon className="w-3 h-3" />
-                                  <span>{isEs ? 'Foto adjunta' : 'Photo attached'}</span>
-                                </span>
-                              )}
-                            </div>
-
-                            {order.transferTransactionId && (
-                              <div className="flex items-center justify-between bg-white/5 px-2.5 py-1.5 rounded-lg border border-white/5">
-                                <span className="text-white/60 text-[11px]">{isEs ? 'ID Transacción / Comprobante:' : 'Transaction ID / Receipt #:'}</span>
-                                <span className="font-mono font-bold text-[#D4AF37] text-xs">
-                                  {order.transferTransactionId}
-                                </span>
-                              </div>
-                            )}
-
-                            {order.cashBillAmount && (
-                              <div className="flex items-center justify-between bg-white/5 px-2.5 py-1.5 rounded-lg border border-white/5">
-                                <span className="text-white/60 text-[11px]">{isEs ? 'Paga con billete de:' : 'Paying with bill:'}</span>
-                                <span className="font-mono font-bold text-emerald-400 text-xs">
-                                  {order.cashBillAmount}
-                                </span>
-                              </div>
-                            )}
-
-                            {order.receiptImageData && (
-                              <div className="flex items-center gap-2 pt-1">
-                                <div
-                                  onClick={() => setPreviewReceiptUrl(order.receiptImageData || null)}
-                                  className="relative group cursor-pointer rounded-lg overflow-hidden border border-white/20 hover:border-[#D4AF37] transition-all w-20 h-16 bg-black shrink-0"
-                                >
-                                  <img
-                                    src={order.receiptImageData}
-                                    alt="Comprobante"
-                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                                  />
-                                  <div className="absolute inset-0 bg-black/40 group-hover:bg-black/10 flex items-center justify-center transition-colors">
-                                    <Eye className="w-4 h-4 text-white drop-shadow" />
-                                  </div>
-                                </div>
-                                <div className="text-[11px] text-white/70">
-                                  <div className="font-semibold text-white">
-                                    {order.receiptFileName || (isEs ? 'Comprobante de Transferencia' : 'Transfer Receipt')}
-                                  </div>
-                                  <button
-                                    type="button"
-                                    onClick={() => setPreviewReceiptUrl(order.receiptImageData || null)}
-                                    className="text-[#D4AF37] hover:underline text-[10px] flex items-center gap-1 font-medium mt-0.5 cursor-pointer"
-                                  >
-                                    <Eye className="w-3 h-3" />
-                                    <span>{isEs ? 'Ver comprobante en grande' : 'View full receipt image'}</span>
-                                  </button>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Itemized list */}
-                        <div className="space-y-1 max-h-32 overflow-y-auto text-xs">
-                          {order.items?.map((item, idx) => (
-                            <div key={idx} className="flex justify-between items-center text-white/80 py-0.5">
-                              <span>
-                                <span className="font-bold text-[#D4AF37]">{item.quantity}x</span>{' '}
-                                {isEs ? item.nameEs : item.nameEn}
-                                {item.spiceLevel && (
-                                  <span className="text-[10px] text-amber-400/80 ml-1">
-                                    ({item.spiceLevel})
-                                  </span>
-                                )}
-                              </span>
-                              <span className="font-mono text-white/60">
-                                ${(item.totalUnitPrice * item.quantity).toFixed(2)}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-
-                        {/* Manual Verification Action Buttons */}
-                        <div className="pt-2 border-t border-white/10 flex flex-wrap items-center justify-between gap-2 text-xs">
-                          {/* Payment status toggle button */}
-                          <div className="flex items-center gap-2">
-                            {isVerified ? (
-                              <button
-                                type="button"
-                                onClick={() => updateOrderPaymentInFirestore(order.id, 'PENDING', false)}
-                                className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-white/60 hover:text-white text-[11px] border border-white/10 transition-colors"
-                              >
-                                {isEs ? 'Marcar como pendiente' : 'Mark as pending'}
-                              </button>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={() => updateOrderPaymentInFirestore(order.id, 'PAID', true, 'PREPARING')}
-                                className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] flex items-center gap-1.5 shadow-md shadow-emerald-900/30 transition-all cursor-pointer"
-                              >
-                                <Check className="w-3.5 h-3.5" />
-                                <span>{isEs ? 'Verificar Comprobante y Enviar a Cocina' : 'Verify Receipt & Send to Kitchen'}</span>
-                              </button>
-                            )}
-                          </div>
-
-                          <div className="text-right ml-auto">
-                            <span className="text-white/60 text-[11px] mr-1">{isEs ? 'Total:' : 'Total:'}</span>
-                            <span className="font-mono font-bold text-sm text-[#D4AF37]">
-                              ${order.total.toFixed(2)} USD
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* TAB 4: SETTINGS */}
+          {/* TAB 3: SETTINGS */}
           {activeTab === 'settings' && (
             <div className="space-y-6 max-w-2xl">
               {/* OPTION 1: RESTAURANT LOGO (HEADER & BADGES) */}
@@ -1187,6 +881,165 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                       >
                         <RotateCcw className="w-3.5 h-3.5" />
                         <span>{isEs ? 'Restablecer Fondo Oscuro' : 'Reset to Dark Theme'}</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* OPTION 3: PAYMENT QR CODE (DEUNA / PICHINCHA) */}
+              <div className="glass border border-white/10 rounded-2xl p-5 space-y-4">
+                <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center border border-purple-500/40">
+                      <QrCode className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h3 className="serif font-bold text-base text-[#F5F5F0]">
+                        {isEs ? 'Opción 3: Código QR de Pago (Deuna! / Banco Pichincha)' : 'Option 3: Payment QR Code (Deuna! / Pichincha)'}
+                      </h3>
+                      <p className="text-[11px] text-white/50">
+                        {isEs
+                          ? 'Se muestra a los clientes en el carrito de compras para pagos rápidos con Deuna o apps bancarias.'
+                          : 'Displayed to customers in the checkout cart for instant scan-to-pay.'}
+                      </p>
+                    </div>
+                  </div>
+                  {customQrUrl ? (
+                    <span className="px-2.5 py-1 rounded-full bg-purple-500/20 text-purple-300 text-[10px] font-bold border border-purple-500/40 uppercase tracking-wider">
+                      {isEs ? 'QR Personalizado' : 'Custom QR'}
+                    </span>
+                  ) : (
+                    <span className="px-2.5 py-1 rounded-full bg-white/10 text-white/60 text-[10px] font-bold border border-white/10 uppercase tracking-wider">
+                      {isEs ? 'QR Predeterminado' : 'Default Deuna QR'}
+                    </span>
+                  )}
+                </div>
+
+                {/* QR Code Live Preview */}
+                <div className="flex flex-col sm:flex-row items-center gap-4 bg-black/40 p-4 rounded-xl border border-white/10">
+                  <div className="w-32 h-32 bg-white p-2 rounded-xl border border-purple-400/40 shadow-lg flex items-center justify-center shrink-0 overflow-hidden">
+                    <img
+                      src={qrInputUrl.trim() || customQrUrl || '/deuna-qr.svg'}
+                      alt="Payment QR Preview"
+                      className="w-full h-full object-contain mx-auto"
+                      onError={(e) => {
+                        const target = e.currentTarget;
+                        if (!target.dataset.triedFallback) {
+                          target.dataset.triedFallback = 'true';
+                          target.src = '/deuna-qr.svg';
+                        }
+                      }}
+                    />
+                  </div>
+                  <div className="text-xs space-y-1.5 text-center sm:text-left">
+                    <p className="font-semibold text-[#F5F5F0]">
+                      {isEs ? 'Vista Previa del QR en Checkout' : 'Checkout QR Preview'}
+                    </p>
+                    <p className="text-white/50 text-[11px]">
+                      {isEs
+                        ? 'Puedes subir una foto del código QR de tu cuenta de Deuna o de tu banco para que los clientes escaneen directamente.'
+                        : 'Upload a picture of your Deuna or bank QR code so customers can scan directly to pay.'}
+                    </p>
+                    <div className="text-[10px] font-mono text-purple-300 bg-purple-950/40 px-2.5 py-1 rounded-lg border border-purple-500/20 inline-block">
+                      {isEs ? 'Titular: Sukhjinder Boparai' : 'Account: Sukhjinder Boparai'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Input & Upload Controls */}
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-white/80 mb-1">
+                      {isEs ? 'Subir Foto de Código QR o Pegar URL de Imagen' : 'Upload QR Image File or Enter URL'}
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="url"
+                        value={qrInputUrl}
+                        onChange={(e) => setQrInputUrl(e.target.value)}
+                        placeholder="https://... o sube foto del código QR"
+                        className="w-full bg-white/5 border border-white/10 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-purple-400/60"
+                      />
+                      <label className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white cursor-pointer text-xs font-semibold shrink-0 transition-colors border border-white/10">
+                        <Upload className="w-3.5 h-3.5 text-purple-400" />
+                        <span>{isEs ? 'Subir QR' : 'Upload'}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            try {
+                              const compressed = await compressImageFile(file, 800, 800, 0.9);
+                              setQrInputUrl(compressed);
+                            } catch (err) {
+                              console.error('Error compressing QR code image', err);
+                              alert(isEs ? 'Error al procesar la imagen del QR' : 'Error processing QR image');
+                            }
+                          }}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
+                  </div>
+
+                  {qrSuccessMsg && (
+                    <p className="text-xs text-emerald-400 font-medium flex items-center gap-1.5">
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>{isEs ? '¡Código QR de pago actualizado exitosamente!' : 'Payment QR successfully updated!'}</span>
+                    </p>
+                  )}
+
+                  {/* Actions */}
+                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                    <button
+                      type="button"
+                      disabled={isSavingQr}
+                      onClick={async () => {
+                        setIsSavingQr(true);
+                        try {
+                          if (onSaveQrCode) {
+                            await onSaveQrCode(qrInputUrl.trim() || null);
+                          }
+                          setQrSuccessMsg(true);
+                          setTimeout(() => setQrSuccessMsg(false), 3000);
+                        } catch (err) {
+                          console.error('Error saving QR code', err);
+                        } finally {
+                          setIsSavingQr(false);
+                        }
+                      }}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs transition-all uppercase tracking-wider disabled:opacity-50 shadow-md shadow-purple-900/30"
+                    >
+                      {isSavingQr ? (
+                        <>
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                          <span>{isEs ? 'Guardando...' : 'Saving...'}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Check className="w-3.5 h-3.5" />
+                          <span>{isEs ? 'Guardar Código QR' : 'Save QR Code'}</span>
+                        </>
+                      )}
+                    </button>
+
+                    {(customQrUrl || qrInputUrl) && (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          setQrInputUrl('');
+                          if (onResetQrCode) {
+                            await onResetQrCode();
+                          }
+                          setQrSuccessMsg(true);
+                          setTimeout(() => setQrSuccessMsg(false), 3000);
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-white text-xs font-semibold transition-colors border border-white/10"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" />
+                        <span>{isEs ? 'Restablecer QR Original' : 'Reset to Default QR'}</span>
                       </button>
                     )}
                   </div>
@@ -1759,50 +1612,6 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* Receipt Image Full Preview Modal */}
-      {previewReceiptUrl && (
-        <div
-          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4"
-          onClick={() => setPreviewReceiptUrl(null)}
-        >
-          <div
-            className="bg-[#0E0E0E] border border-white/20 glass rounded-2xl max-w-2xl w-full p-4 sm:p-5 text-white space-y-3 shadow-2xl relative"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between border-b border-white/10 pb-2">
-              <span className="font-bold text-sm text-[#D4AF37] flex items-center gap-2">
-                <ImageIcon className="w-4 h-4" />
-                <span>{isEs ? 'Comprobante de Transferencia' : 'Transfer Receipt Verification'}</span>
-              </span>
-              <button
-                type="button"
-                onClick={() => setPreviewReceiptUrl(null)}
-                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white/70 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="max-h-[75vh] overflow-auto rounded-xl bg-black border border-white/10 flex items-center justify-center p-2">
-              <img
-                src={previewReceiptUrl}
-                alt="Comprobante completo"
-                className="max-h-[70vh] w-auto object-contain rounded-lg shadow-lg"
-              />
-            </div>
-            <div className="flex justify-between items-center text-xs text-white/60 pt-1">
-              <span>{isEs ? 'Verifica el número de referencia y monto antes de enviar a cocina.' : 'Check reference and amount before sending to kitchen.'}</span>
-              <button
-                type="button"
-                onClick={() => setPreviewReceiptUrl(null)}
-                className="px-4 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-medium transition-colors cursor-pointer"
-              >
-                {isEs ? 'Cerrar' : 'Close'}
-              </button>
-            </div>
           </div>
         </div>
       )}
