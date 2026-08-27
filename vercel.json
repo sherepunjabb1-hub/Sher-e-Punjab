@@ -4,15 +4,7 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
-      "source": "/api/create-payment",
-      "destination": "/api/create-payment.js"
-    },
-    {
-      "source": "/api/confirm-payment",
-      "destination": "/api/confirm-payment.js"
-    },
-    {
-      "source": "/((?!api/|assets/|favicon|logo).*)",
+      "source": "/((?!assets/|favicon|logo|deuna-qr).*)",
       "destination": "/index.html"
     }
   ]
