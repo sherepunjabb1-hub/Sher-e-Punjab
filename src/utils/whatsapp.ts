@@ -51,7 +51,9 @@ export function generateWhatsAppOrderUrl(
       : 'Pickup at restaurant';
 
   const cleanCustomerName = sanitizeInput(details.customerName);
+  const cleanCustomerId = sanitizeInput(details.customerId);
   const cleanCustomerPhone = sanitizeInput(details.customerPhone);
+  const cleanCustomerEmail = sanitizeInput(details.customerEmail);
   const cleanAddress = sanitizeInput(locationDetail);
 
   let message = '';
@@ -92,7 +94,9 @@ export function generateWhatsAppOrderUrl(
   message += `━━━━━━━━━━━━━━━━━━━━\n\n`;
 
   message += `👤 *${isEs ? 'Cliente' : 'Customer'}:* ${cleanCustomerName}\n`;
+  message += `🆔 *${isEs ? 'Cédula / RUC (ID cualquier país)' : 'ID / Cedula / RUC (any country ID)'}:* ${cleanCustomerId}\n`;
   message += `📞 *${isEs ? 'Teléfono' : 'Phone'}:* ${cleanCustomerPhone}\n`;
+  message += `✉️ *${isEs ? 'Correo Electrónico' : 'Email'}:* ${cleanCustomerEmail}\n`;
   message += `🛎️ *${isEs ? 'Servicio' : 'Service'}:* ${serviceLabel}\n`;
   message += `📍 *${isEs ? 'Dirección' : 'Address'}:* ${cleanAddress}\n`;
 

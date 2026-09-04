@@ -80,8 +80,10 @@ export interface LiveLocationData {
 }
 
 export interface OrderCustomerDetails {
+  customerId: string; // Cedula / RUC (any country ID number)
   customerName: string;
   customerPhone: string;
+  customerEmail: string;
   serviceType: ServiceType;
   deliveryAddress: string;
   tableNumber: string;

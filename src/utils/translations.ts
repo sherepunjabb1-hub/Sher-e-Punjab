@@ -41,7 +41,11 @@ export interface Translations {
   serviceTakeout: string;
   serviceDelivery: string;
   customerName: string;
+  customerIdLabel: string;
+  customerIdPlaceholder: string;
   customerPhone: string;
+  customerEmail: string;
+  customerEmailPlaceholder: string;
   deliveryAddress: string;
   deliveryAddressPlaceholder: string;
   tableNumber: string;
@@ -166,7 +170,11 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     serviceTakeout: 'Para Llevar',
     serviceDelivery: 'A Domicilio',
     customerName: 'Nombre del Cliente',
+    customerIdLabel: 'Cédula o RUC (número de identificación de cualquier país)',
+    customerIdPlaceholder: 'Ej: 1715256226 / Pasaporte / Documento de cualquier país',
     customerPhone: 'Teléfono / WhatsApp',
+    customerEmail: 'Correo Electrónico',
+    customerEmailPlaceholder: 'Ej: cliente@correo.com',
     deliveryAddress: 'Dirección de Entrega',
     deliveryAddressPlaceholder: 'Calle principal, número, sector y referencias en Quito',
     tableNumber: 'Número de Mesa',
@@ -289,7 +297,11 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     serviceTakeout: 'Takeout',
     serviceDelivery: 'Home Delivery',
     customerName: 'Customer Name',
+    customerIdLabel: 'Client ID / Cedula or RUC (any country ID number)',
+    customerIdPlaceholder: 'E.g., 1715256226 / Passport / Any country ID',
     customerPhone: 'Phone / WhatsApp',
+    customerEmail: 'Email Address',
+    customerEmailPlaceholder: 'E.g., client@example.com',
     deliveryAddress: 'Delivery Address',
     deliveryAddressPlaceholder: 'Street, building/house number, sector & landmarks in Quito',
     tableNumber: 'Table Number',

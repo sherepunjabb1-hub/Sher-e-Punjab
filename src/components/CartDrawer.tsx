@@ -77,8 +77,10 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
   // Customer & order state
   const [details, setDetails] = useState<OrderCustomerDetails>({
+    customerId: '',
     customerName: '',
     customerPhone: '',
+    customerEmail: '',
     serviceType: 'delivery',
     deliveryAddress: '',
     tableNumber: '',
@@ -304,17 +306,33 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
   const validateCartForm = (): boolean => {
     const errors: string[] = [];
+    if (!details.customerId.trim()) {
+      errors.push(
+        isEs
+          ? 'El ID del cliente: Cédula o RUC (número de identificación de cualquier país) es obligatorio'
+          : 'Client ID: Cedula or RUC (any country ID number) is required'
+      );
+    }
     if (!details.customerName.trim()) {
       errors.push(isEs ? 'El nombre del cliente es obligatorio' : 'Customer name is required');
     }
     if (!details.customerPhone.trim()) {
       errors.push(isEs ? 'El teléfono o WhatsApp es obligatorio' : 'Phone / WhatsApp is required');
     }
-    if (details.serviceType === 'delivery' && !details.deliveryAddress.trim() && !details.liveLocation) {
+    if (!details.customerEmail.trim()) {
+      errors.push(isEs ? 'El correo electrónico es obligatorio' : 'Email address is required');
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(details.customerEmail.trim())) {
       errors.push(
         isEs
-          ? 'La dirección de entrega o la ubicación GPS es obligatoria'
-          : 'Delivery address or live GPS location is required'
+          ? 'Por favor ingresa un correo electrónico válido'
+          : 'Please enter a valid email address'
+      );
+    }
+    if (!details.deliveryAddress.trim() && !details.liveLocation) {
+      errors.push(
+        isEs
+          ? 'La dirección es obligatoria'
+          : 'Address is required'
       );
     }
     if (details.serviceType === 'dine_in' && !details.tableNumber.trim()) {
@@ -690,6 +708,42 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
               {/* Customer Details Input Fields */}
               <div className="space-y-3 bg-white/5 p-4 rounded-2xl border border-white/10">
+                <div className="flex items-center justify-between pb-1 border-b border-white/10">
+                  <span className="text-xs font-bold uppercase tracking-wider text-[#D4AF37]">
+                    {isEs ? 'Datos del Cliente (Obligatorios)' : 'Customer Details (Required)'}
+                  </span>
+                  <span className="text-[10px] text-white/40">
+                    * {isEs ? 'Campos obligatorios' : 'Required fields'}
+                  </span>
+                </div>
+
+                {/* Cliente Id (Cedula O RUC) */}
+                <div>
+                  <label className="block text-xs font-semibold text-white/80 mb-1">
+                    {isEs
+                      ? 'Cliente ID: Cédula o RUC (número de identificación de cualquier país)'
+                      : 'Client ID: Cedula or RUC (any country ID number)'}{' '}
+                    <span className="text-[#FF6321]">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={details.customerId}
+                    onChange={(e) => setDetails({ ...details, customerId: e.target.value })}
+                    placeholder={
+                      isEs
+                        ? 'Ej: 1715256226 / Pasaporte / Documento de cualquier país'
+                        : 'E.g., 1715256226 / Passport / Any country ID'
+                    }
+                    className="w-full bg-white/5 border border-white/10 focus:border-[#D4AF37]/60 rounded-xl p-2.5 text-xs sm:text-sm text-white placeholder-white/30 focus:outline-none font-mono"
+                    required
+                  />
+                  <span className="text-[10px] text-white/40 mt-0.5 block">
+                    {isEs
+                      ? 'Válido para cédula ecuatoriana, RUC o documento de cualquier país'
+                      : 'Valid for Ecuadorian Cedula, RUC, or any country ID number'}
+                  </span>
+                </div>
+
                 {/* Name */}
                 <div>
                   <label className="block text-xs font-semibold text-white/80 mb-1">
@@ -701,6 +755,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     onChange={(e) => setDetails({ ...details, customerName: e.target.value })}
                     placeholder={isEs ? 'Ej: Carlos Andrade' : 'E.g., John Doe'}
                     className="w-full bg-white/5 border border-white/10 focus:border-[#D4AF37]/60 rounded-xl p-2.5 text-xs sm:text-sm text-white placeholder-white/30 focus:outline-none"
+                    required
                   />
                 </div>
 
@@ -714,9 +769,52 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     value={details.customerPhone}
                     onChange={(e) => setDetails({ ...details, customerPhone: e.target.value })}
                     placeholder={isEs ? 'Ej: 098 765 4321' : 'E.g., +593 98 765 4321'}
-                    className="w-full bg-white/5 border border-white/10 focus:border-[#D4AF37]/60 rounded-xl p-2.5 text-xs sm:text-sm text-white placeholder-white/30 focus:outline-none"
+                    className="w-full bg-white/5 border border-white/10 focus:border-[#D4AF37]/60 rounded-xl p-2.5 text-xs sm:text-sm text-white placeholder-white/30 focus:outline-none font-mono"
+                    required
                   />
                 </div>
+
+                {/* Email */}
+                <div>
+                  <label className="block text-xs font-semibold text-white/80 mb-1">
+                    {t.customerEmail} <span className="text-[#FF6321]">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    value={details.customerEmail}
+                    onChange={(e) => setDetails({ ...details, customerEmail: e.target.value })}
+                    placeholder={isEs ? 'Ej: cliente@correo.com' : 'E.g., client@example.com'}
+                    className="w-full bg-white/5 border border-white/10 focus:border-[#D4AF37]/60 rounded-xl p-2.5 text-xs sm:text-sm text-white placeholder-white/30 focus:outline-none"
+                    required
+                  />
+                </div>
+
+                {/* Address (If Takeout or Dine-in) */}
+                {details.serviceType !== 'delivery' && (
+                  <div>
+                    <label className="block text-xs font-semibold text-white/80 mb-1">
+                      {isEs ? 'Dirección del Cliente' : 'Customer Address'}{' '}
+                      <span className="text-[#FF6321]">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={details.deliveryAddress}
+                      onChange={(e) => setDetails({ ...details, deliveryAddress: e.target.value })}
+                      placeholder={
+                        isEs
+                          ? 'Ej: Av. Amazonas N24-100 y Colón, Quito'
+                          : 'E.g., Street address and city'
+                      }
+                      className="w-full bg-white/5 border border-white/10 focus:border-[#D4AF37]/60 rounded-xl p-2.5 text-xs sm:text-sm text-white placeholder-white/30 focus:outline-none"
+                      required
+                    />
+                    <span className="text-[10px] text-white/40 mt-0.5 block">
+                      {isEs
+                        ? 'Requerido para facturación y registro del cliente'
+                        : 'Required for receipt invoicing and customer record'}
+                    </span>
+                  </div>
+                )}
 
                 {/* Address (If Delivery) */}
                 {details.serviceType === 'delivery' && (
@@ -1044,6 +1142,22 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     <span className="font-medium text-white truncate block">{details.customerName}</span>
                   </div>
                   <div>
+                    <span className="text-white/40 block">{isEs ? 'Cédula / RUC / ID:' : 'ID / Cedula:'}</span>
+                    <span className="font-medium text-white truncate block font-mono">{details.customerId}</span>
+                  </div>
+                  <div>
+                    <span className="text-white/40 block">{isEs ? 'Teléfono:' : 'Phone:'}</span>
+                    <span className="font-medium text-white truncate block">{details.customerPhone}</span>
+                  </div>
+                  <div>
+                    <span className="text-white/40 block">{isEs ? 'Correo:' : 'Email:'}</span>
+                    <span className="font-medium text-white truncate block">{details.customerEmail}</span>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="text-white/40 block">{isEs ? 'Dirección:' : 'Address:'}</span>
+                    <span className="font-medium text-white truncate block">{details.deliveryAddress || '-'}</span>
+                  </div>
+                  <div className="col-span-2">
                     <span className="text-white/40 block">{isEs ? 'Servicio:' : 'Service:'}</span>
                     <span className="font-medium text-white truncate block">
                       {details.serviceType === 'delivery'

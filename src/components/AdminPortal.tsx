@@ -118,6 +118,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   // Dish Form Modal
   const [isDishModalOpen, setIsDishModalOpen] = useState(false);
   const [editingDish, setEditingDish] = useState<MenuItem | null>(null);
+  const [dishPriceInput, setDishPriceInput] = useState<string>('10.00');
 
   // Category Form Modal
   const [isCatModalOpen, setIsCatModalOpen] = useState(false);
@@ -214,11 +215,13 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
       defaultSpiceLevel: 'medium',
       availableAddons: DEFAULT_ADDONS,
     });
+    setDishPriceInput('10.00');
     setIsDishModalOpen(true);
   };
 
   const openEditDishForm = (dish: MenuItem) => {
     setEditingDish({ ...dish });
+    setDishPriceInput(dish.price.toString());
     setIsDishModalOpen(true);
   };
 
@@ -229,7 +232,16 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
       alert(isEs ? 'El nombre en español es requerido' : 'Spanish name is required');
       return;
     }
-    onSaveDish(editingDish);
+    const parsedPrice = parseFloat(dishPriceInput);
+    if (isNaN(parsedPrice) || parsedPrice < 0) {
+      alert(isEs ? 'Por favor ingresa un precio válido' : 'Please enter a valid price');
+      return;
+    }
+    const dishToSave: MenuItem = {
+      ...editingDish,
+      price: parsedPrice,
+    };
+    onSaveDish(dishToSave);
     setIsDishModalOpen(false);
     setEditingDish(null);
   };
@@ -1232,22 +1244,30 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block font-semibold text-white/80 mb-1">
-                    {t.dishPrice} <span className="text-[#FF6321]">*</span>
+                    {t.dishPrice} <span className="text-[#FF6321]">*</span> ($ USD)
                   </label>
                   <input
                     type="number"
-                    step="0.25"
+                    step="any"
                     min="0"
-                    value={editingDish.price}
-                    onChange={(e) =>
-                      setEditingDish({
-                        ...editingDish,
-                        price: parseFloat(e.target.value) || 0,
-                      })
-                    }
-                    className="w-full bg-white/5 border border-white/10 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-[#D4AF37]/60"
+                    value={dishPriceInput}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setDishPriceInput(val);
+                      const parsed = parseFloat(val);
+                      if (!isNaN(parsed)) {
+                        setEditingDish((prev) => (prev ? { ...prev, price: parsed } : null));
+                      }
+                    }}
+                    placeholder="Ej: 10.95"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-[#D4AF37]/60 font-mono"
                     required
                   />
+                  <p className="text-[10px] text-white/40 mt-1">
+                    {isEs
+                      ? 'Puedes ingresar cualquier precio con centavos (ej: 9.85, 12.05, 13.15, 10.99)'
+                      : 'You can enter any exact price with decimals (e.g. 9.85, 12.05, 13.15, 10.99)'}
+                  </p>
                 </div>
                 <div>
                   <label className="block font-semibold text-white/80 mb-1">
